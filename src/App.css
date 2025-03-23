@@ -1,65 +1,85 @@
+/* App.css */
+:root {
+  --primary-color: #991D20;
+  --primary-light: rgba(153, 29, 32, 0.1);
+  --text-color: #727272;
+  --text-dark: #333333;
+  --light-bg: #F9F9F9;
+  --white: #FFFFFF;
+  --border-color: #E5E5E5;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
 
-.App {
-  margin: 0;
-  font-family: sans-serif !important;
-  font-weight: 400;
-  font-style: normal;
-
-  text-align: center;
-  justify-items: center;
 
 
 
-
+.app {
+  min-height: 100vh;
   display: flex;
-
-
-
+  flex-direction: column;
 }
 
-
-
-.routes-content{
-
-  padding: 2%;
+/* Common utility classes */
+.card {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-
-.content{
-  padding :2% ; 
+.page-title {
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  font-weight: 600;
+  font-size: 24px;
 }
 
-
-.mainContent {
-  width: 80%;
+.section-title {
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  font-weight: 500;
+  font-size: 18px;
 }
 
+.text-primary {
+  color: var(--primary-color);
+}
 
-@media (max-width: 900px) {
-  .mainContent {
-    width: 75%;
+.btn {
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn:hover {
+  background-color: #7d1518;
+}
+
+.btn-secondary {
+  background-color: var(--light-bg);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border-color);
+}
+
+/* Responsive grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 576px) {
+  .grid {
+    grid-template-columns: 1fr;
   }
-
- 
 }
-
-
-
-
-@font-face {
-  font-family: 'Poppins-Regular';
-  src: url('./Fonts/Poppins/Poppins-Regular.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Poppins-Medium';
-  src: url('./Fonts/Poppins/Poppins-Medium.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Poppins-SemiBold';
-  src: url('./Fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
-}
-
-.body {
-  font-family: Poppins-Regular;
-}
-
