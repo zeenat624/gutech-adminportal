@@ -14,7 +14,10 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
     { id: 'transcript', label: 'Transcript', icon: '📜' },
     { id: 'timetable', label: 'Timetable', icon: '📆' },
     { id: 'fees', label: 'Fees', icon: '💵' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' }
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'course', label: 'Courses', icon: '📚', path: 'course' },
+    { id: "assign-section", label: "Assign Section", icon: "📝", path: "/AssignSection" },
+    { id: "enroll-student", label: "Enroll Student", icon: "🎓", path: "/enroll-student" }
   ];
   
   return (

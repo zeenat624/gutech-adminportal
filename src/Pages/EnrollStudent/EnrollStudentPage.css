@@ -1,0 +1,97 @@
+/* ====== Enrollment Container ====== */
+.enrollment-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ====== Title ====== */
+.enrollment-container h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* ====== Form ====== */
+.enrollment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ====== Form Group ====== */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+/* ====== Dropdown Styles ====== */
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #333;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group select:focus {
+    border-color: rgb(128, 8, 8);
+    box-shadow: 0 0 6px rgba(128, 8, 8, 0.4);
+}
+
+/* ====== Button Styles ====== */
+.enroll-button {
+    background-color: rgb(128, 8, 8);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.enroll-button:hover {
+    background-color: #5A0202;
+    transform: translateY(-2px);
+}
+
+/* ====== Message Styles ====== */
+.enrollment-message {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.success-message {
+    color: green;
+}
+
+.error-message {
+    color: red;
+}
+
+/* ====== Responsive Design ====== */
+@media (max-width: 600px) {
+    .enrollment-container {
+        width: 90%;
+        padding: 20px;
+    }
+}

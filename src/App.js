@@ -16,9 +16,11 @@ import AdminEventCalendar from "./Pages/Event Calendar/Event Calendar";
 import Announcement from "./Pages/Announcements/Announcement";
 import Dashboard from "./Pages/Dashboard/Dashboard.jsx";
 import ClassSchedule from "./Pages/Class Schedule/Class Schedule.jsx";
+import EnrollStudentPage from "./Pages/EnrollStudent/EnrollStudentPage";
 
 import Attendance from './Pages/Attendance/Attendance';
-
+import CoursePage from "./Pages/Course/CoursePage.js";
+import AssignSectionPage from "./Pages/AssignSection/AssignSectionPage.js";
 function App() {
   return (
     <Router>
@@ -39,6 +41,11 @@ function App() {
                 <Route path="Transcript" element={<TranscriptView />} />
                 <Route path="Examschedule" element={<Examschedule />} />
                 <Route path="Attendance" element={<Attendance />} />
+                <Route path="Course" element={<CoursePage />} />
+                <Route path="assign-section" element={<AssignSectionPage />} />
+                <Route path="enroll-student" element={<EnrollStudentPage />} />
+
+
               </Route>
             </Routes>
           </div>
