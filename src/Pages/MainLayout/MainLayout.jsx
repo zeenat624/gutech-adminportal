@@ -1,7 +1,7 @@
 // MainLayout.jsx - Updated
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/Sidebar';  
-import Topbar from '../Topbar/Topbar';
+import Topbar from '../topbar/topbar';
 import './MainLayout.css';
 import { Outlet, useLocation } from 'react-router-dom';
 

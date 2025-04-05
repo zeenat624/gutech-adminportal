@@ -19,6 +19,12 @@ const Signup = () => {
     password: '',
   });
 
+  // Login form state
+  const [loginForm, setLoginForm] = useState({
+    identifier: '', // Can be email or employee ID
+    password: '',
+  });
+
   const navigate = useNavigate();
 
   // Department options
@@ -28,6 +34,13 @@ const Signup = () => {
   const handleSignupChange = (e) => {
     const { name, value } = e.target;
     setSignupForm({ ...signupForm, [name]: value });
+    setError('');
+  };
+
+  // Handle login form input changes
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setLoginForm({ ...loginForm, [name]: value });
     setError('');
   };
 
@@ -51,6 +64,15 @@ const Signup = () => {
     return true;
   };
 
+  // Validate login form
+  const validateLoginForm = () => {
+    if (!loginForm.identifier || !loginForm.password) {
+      setError('All fields are required');
+      return false;
+    }
+    return true;
+  };
+
   // Handle signup submission
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -62,7 +84,12 @@ const Signup = () => {
       setError('');
 
       const apiUrl = process.env.REACT_APP_BACKEND_URL;
-      const response = await axios.post(`${apiUrl}/api/auth/register`, signupForm);
+      const userData = {
+        ...signupForm,
+        role: 'admin', // Set role as admin
+      };
+      
+      const response = await axios.post(`${apiUrl}/api/auth/register`, userData);
 
       console.log('Registration successful:', response.data);
 
@@ -79,13 +106,50 @@ const Signup = () => {
       // Show success message
       alert('Registration successful! Please log in with your credentials.');
 
-      // Redirect user to login page (Fixing Toggle Issue)
-      navigate('/login');
+      // Switch to login tab
+      setIsSignupActive(false);
 
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
       console.error('Registration error:', errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle login submission
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    
+    if (!validateLoginForm()) return;
+    
+    try {
+      setIsSubmitting(true);
+      setError('');
+      
+      const apiUrl = process.env.REACT_APP_BACKEND_URL;
+      const response = await axios.post(`${apiUrl}/api/auth/login`, {
+        email: loginForm.identifier,
+        password: loginForm.password,
+      });
+      
+      // Check if the user is an admin
+      if (response.data.user.role !== 'admin') {
+        setError('Access denied. This portal is for administrators only.');
+        return;
+      }
+      
+      // Save user data securely
+      sessionStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Navigate to dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(errorMessage);
+      console.error('Login error:', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -173,14 +237,44 @@ const Signup = () => {
           </form>
         </div>
 
-        {/* Sign In Form (Unchanged) */}
+        {/* Sign In Form */}
         <div className="form-container sign-in">
-          <form>
+          <form onSubmit={handleLogin}>
             <h1 className="form-title">Sign In</h1>
-            <input type="text" placeholder="Email or Roll Number" disabled={isSubmitting} />
-            <input type="password" placeholder="Password" disabled={isSubmitting} />
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <input 
+              type="text" 
+              name="identifier"
+              placeholder="Email or Employee ID" 
+              value={loginForm.identifier}
+              onChange={handleLoginChange}
+              disabled={isSubmitting} 
+            />
+            
+            <div className="password-field">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                name="password"
+                placeholder="Password" 
+                value={loginForm.password}
+                onChange={handleLoginChange}
+                disabled={isSubmitting} 
+              />
+              <div
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
+              </div>
+            </div>
+            
             <Link to="/forgot-password" className="forgot-password">Forgot Your Password?</Link>
-            <button type="submit" disabled={isSubmitting}>Sign In</button>
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Processing...' : 'Sign In'}
+            </button>
           </form>
         </div>
 
