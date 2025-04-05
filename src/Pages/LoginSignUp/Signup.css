@@ -1,17 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-/* General Page Styling */
+/* Page-level centering styles */
 .auth-page {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
-  background-color: #f8f8f8;
   box-sizing: border-box;
+  background-color: #f8f8f8;
 }
 
-/* Auth Container */
 .auth-container {
   background-color: #fff;
   border-radius: 30px;
@@ -28,122 +27,29 @@
   font-family: 'Montserrat', sans-serif;
 }
 
-/* Form Containers */
-.form-container {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 0 40px;
-  transition: transform 0.6s ease-in-out, opacity 0.3s ease-in-out;
-}
-/* Align "Forgot Password?" to the right */
-.forgot-password {
-  display: block;
-  text-align: right;
-  width: 100%;
+.auth-container p {
   font-size: 14px;
-  margin: 5px 0 15px; /* Add spacing below */
-  color: #991D20;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+  margin: 20px 0;
+}
+
+.auth-container a {
+  color: #333;
+  font-size: 13px;
+  text-decoration: none;
+  margin: 15px 0 10px;
   transition: color 0.3s ease;
 }
 
-.forgot-password:hover {
-  color: #b52427;
+.auth-container a:hover {
+  color: #991D20;
   text-decoration: underline;
 }
 
-/* Center the Sign In button */
-.sign-in form {
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Centers all elements */
-  width: 100%;
-}
-
-.sign-in button {
-  width: 100%; /* Makes button full width */
-  max-width: 200px; /* Prevents button from stretching too wide */
-  margin-top: 10px; /* Adds spacing from "Forgot Password?" */
-  align-self: center; /* Ensures it's centered */
-}
-
-/* Sign In Form */
-.sign-in {
-  left: 0;
-  z-index: 2;
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Sign Up Form (Hidden Initially) */
-.sign-up {
-  right: 0;
-  z-index: 1;
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-/* Active Class - Smooth Transition */
-.auth-container.active .sign-in {
-  transform: translateX(-100%);
-  opacity: 0;
-  z-index: 1;
-}
-
-.auth-container.active .sign-up {
-  transform: translateX(0);
-  opacity: 1;
-  z-index: 2;
-}
-
-/* Form Titles */
-.form-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #991D20;
-  margin-bottom: 20px;
-}
-
-/* Input Fields */
-.auth-container input, 
-.auth-container select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin: 8px 0;
-  font-size: 14px;
-  background-color: #f9f9f9;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.auth-container input:focus {
-  border-color: #991D20;
-  box-shadow: 0 0 5px rgba(153, 29, 32, 0.3);
-}
-
-/* Error Message */
-.error-message {
-  color: #991D20;
-  background-color: #fde8e8;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-}
-
-/* Buttons */
 .auth-container button {
   background-color: #991D20;
-  color: white;
+  color: #fff;
   font-size: 14px;
   padding: 10px 45px;
   border: 1px solid transparent;
@@ -167,7 +73,117 @@
   transform: none;
 }
 
-/* Toggle Container */
+.auth-container form {
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  height: 100%;
+  width: 100%;
+}
+
+.form-title {
+  margin-top: 15px;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.error-message {
+  color: #991D20;
+  background-color: #fde8e8;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: #666;
+}
+
+.auth-container input {
+  background-color: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin: 8px 0;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-container input:focus {
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(153, 29, 32, 0.2);
+  outline: none;
+}
+
+.form-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  transition: all 0.6s ease-in-out;
+}
+
+.sign-in {
+  left: 0;
+  z-index: 2;
+}
+
+.sign-up {
+  left: 0;
+  opacity: 0;
+  z-index: 1;
+}
+
+.auth-container.active .sign-in {
+  transform: translateX(100%);
+  opacity: 0;
+  z-index: 1;
+}
+
+.auth-container.active .sign-up {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+}
+
+@keyframes move {
+  0%, 49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+  50%, 100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
 .toggle-container {
   position: absolute;
   top: 0;
@@ -176,22 +192,19 @@
   height: 100%;
   overflow: hidden;
   transition: all 0.6s ease-in-out;
-  border-radius: 150px 0 0 100px;
   z-index: 1000;
 }
 
-/* Toggle Effect */
 .auth-container.active .toggle-container {
   transform: translateX(-100%);
-  border-radius: 0 150px 100px 0;
 }
 
 .toggle {
-  background: linear-gradient(135deg, #b52427, #991D20);
-  color: white;
+  background: linear-gradient(to right, #991D20, #b52427);
+  height: 100%;
+  color: #fff;
   position: relative;
   left: -100%;
-  height: 100%;
   width: 200%;
   transform: translateX(0);
   transition: all 0.6s ease-in-out;
@@ -201,21 +214,44 @@
   transform: translateX(50%);
 }
 
-/* Toggle Panels */
 .toggle-panel {
   position: absolute;
   width: 50%;
   height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 0 30px;
   text-align: center;
+  transform: translateX(0);
   transition: all 0.6s ease-in-out;
 }
 
-/* Left Panel */
+.toggle-panel h1 {
+  font-weight: 600;
+  margin: 0;
+}
+
+.toggle-message {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 20px 0;
+}
+
+.toggle-button {
+  background-color: transparent;
+  border-color: #fff;
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 40px;
+  margin-top: 15px;
+}
+
+.toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .toggle-left {
   transform: translateX(-200%);
 }
@@ -224,7 +260,6 @@
   transform: translateX(0);
 }
 
-/* Right Panel */
 .toggle-right {
   right: 0;
   transform: translateX(0);
@@ -234,28 +269,56 @@
   transform: translateX(200%);
 }
 
-/* Toggle Button */
-.toggle-button {
-  background-color: transparent;
-  border: 1px solid white;
-  margin-top: 10px;
-  padding: 8px 30px;
-  font-size: 12px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+.forgot-password {
+  color: #991D20;
+  font-size: 13px;
+  text-decoration: none;
+  margin: 15px 0;
+  transition: color 0.3s ease;
 }
 
-.toggle-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+.forgot-password:hover {
+  color: #b52427;
+  text-decoration: underline;
 }
 
-/* Responsive Styles */
 @media (max-width: 768px) {
   .auth-container {
-    min-height: 580px;
+    min-height: auto;
     width: 100%;
   }
-
+  
   .forgot-password {
-    align-self: center; /* Center on small screens */
+    text-align: center;
   }
+}
+
+.department-select {
+  background-color: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin: 8px 0;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 15px;
+}
+
+.department-select:focus {
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(153, 29, 32, 0.2);
+  outline: none;
+}
+
+.department-select option {
+  background-color: #fff;
+  color: #333;
+  padding: 10px;
 }

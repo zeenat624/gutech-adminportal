@@ -9,12 +9,14 @@ const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Department options
+  const departments = ['HR', 'Engineering', 'Sales', 'Marketing', 'Finance', 'IT'];
+
   // Signup form state
   const [signupForm, setSignupForm] = useState({
     name: '',
     email: '',
     employeeId: '',
-    designation: '',
     department: '',
     password: '',
   });
@@ -26,9 +28,6 @@ const Signup = () => {
   });
 
   const navigate = useNavigate();
-
-  // Department options
-  const departments = ['HR', 'Engineering', 'Sales', 'Marketing', 'Finance', 'IT'];
 
   // Handle signup form input changes
   const handleSignupChange = (e) => {
@@ -46,7 +45,7 @@ const Signup = () => {
 
   // Validate signup form
   const validateSignupForm = () => {
-    if (!signupForm.name || !signupForm.email || !signupForm.employeeId || !signupForm.designation || !signupForm.department || !signupForm.password) {
+    if (!signupForm.name || !signupForm.email || !signupForm.employeeId || !signupForm.department || !signupForm.password) {
       setError('All fields are required');
       return false;
     }
@@ -98,17 +97,15 @@ const Signup = () => {
         name: '',
         email: '',
         employeeId: '',
-        designation: '',
         department: '',
         password: '',
       });
 
-      // Show success message
-      alert('Registration successful! Please log in with your credentials.');
-
       // Switch to login tab
       setIsSignupActive(false);
 
+      // Show success message
+      alert('Registration successful! Please log in with your credentials.');
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
@@ -155,6 +152,11 @@ const Signup = () => {
     }
   };
 
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <div className="auth-page">
       <div className={`auth-container ${isSignupActive ? 'active' : ''}`}>
@@ -192,20 +194,12 @@ const Signup = () => {
               disabled={isSubmitting}
             />
 
-            <input
-              type="text"
-              name="designation"
-              placeholder="Designation"
-              value={signupForm.designation}
-              onChange={handleSignupChange}
-              disabled={isSubmitting}
-            />
-
             <select
               name="department"
               value={signupForm.department}
               onChange={handleSignupChange}
               disabled={isSubmitting}
+              className="department-select"
             >
               <option value="">Select Department</option>
               {departments.map((dept) => (
@@ -224,7 +218,7 @@ const Signup = () => {
               />
               <div
                 className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={togglePasswordVisibility}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
@@ -264,7 +258,7 @@ const Signup = () => {
               />
               <div
                 className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={togglePasswordVisibility}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <i className="fas fa-eye-slash"></i> : <i className="fas fa-eye"></i>}
