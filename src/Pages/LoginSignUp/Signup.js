@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import './Signup.css';
+import { departments } from '../../config/academicConfig';
 
 const Signup = () => {
   const [isSignupActive, setIsSignupActive] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  // Department options
-  const departments = ['HR', 'Engineering', 'Sales', 'Marketing', 'Finance', 'IT'];
 
   // Signup form state
   const [signupForm, setSignupForm] = useState({
