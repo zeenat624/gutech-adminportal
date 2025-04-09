@@ -112,11 +112,11 @@ const StudentMarksPage = () => {
             'x-auth-token': getAuthToken()
           }
         });
-        setMarksData(response.data);
+        setMarksData(response.data.data || []);
       } catch (err) {
         setError('Failed to load marks data. Please try again.');
         console.error('Error loading marks data:', err);
-        // Keep existing marks data if available
+        setMarksData([]);
       } finally {
         setLoading(false);
       }
@@ -152,6 +152,9 @@ const StudentMarksPage = () => {
     if (!student.assessmentTypes) return 0;
     
     return student.assessmentTypes.reduce((total, type) => {
+      // Skip calculation if maxMarks is zero to avoid division by zero
+      if (type.totalMaxMarks === 0) return total;
+      
       const weightedMarks = (type.totalObtainedMarks / type.totalMaxMarks) * type.totalWeightage;
       return total + weightedMarks;
     }, 0);
