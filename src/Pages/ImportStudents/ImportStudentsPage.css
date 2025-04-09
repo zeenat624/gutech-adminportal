@@ -32,6 +32,7 @@
 .upload-area {
     flex: 1;
     position: relative;
+    min-height: 50px;
 }
 
 .file-upload input[type="file"] {
@@ -52,6 +53,10 @@
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .file-label:hover {

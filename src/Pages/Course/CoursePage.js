@@ -3,6 +3,7 @@ import axios from "axios";
 import "./CoursePage.css";
 import { toast } from "react-hot-toast";
 import { departments, programs, getCurrentAcademicYear } from '../../config/academicConfig';
+import TeacherAssignmentPage from '../TeacherAssignment/TeacherAssignmentPage';
 
 const CoursePage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
@@ -28,7 +29,7 @@ const CoursePage = () => {
   const [courseOfferings, setCourseOfferings] = useState([]);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('create'); // 'create' or 'offerings'
+  const [activeTab, setActiveTab] = useState('create'); // 'create', 'offerings', or 'assignments'
   const [groupByOptions, setGroupByOptions] = useState({
     department: true,
     program: false,
@@ -42,7 +43,7 @@ const CoursePage = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await axios.get(`${apiUrl}/api/course`);
+      const response = await axios.get(`${apiUrl}/api/courses`);
       setCourses(response.data);
     } catch (error) {
       setMessage({ text: "Error fetching courses", type: "error" });
@@ -87,7 +88,7 @@ const CoursePage = () => {
 
     try {
       const response = await axios.post(
-        `${apiUrl}/api/course`,
+        `${apiUrl}/api/courses`,
         course,
         {
           headers: {
@@ -218,6 +219,12 @@ const CoursePage = () => {
         >
           Course Offerings
         </button>
+        <button 
+          className={`tab ${activeTab === 'assignments' ? 'active' : ''}`}
+          onClick={() => setActiveTab('assignments')}
+        >
+          Teacher Assignments
+        </button>
       </div>
 
       {message.text && <p className={`message ${message.type}`}>{message.text}</p>}
@@ -281,7 +288,7 @@ const CoursePage = () => {
             {loading ? "Creating..." : "Create Course"}
           </button>
         </form>
-      ) : (
+      ) : activeTab === 'offerings' ? (
         <div className="offerings-section">
           <form className="offering-form" onSubmit={handleOfferingSubmit}>
             <div>
@@ -365,7 +372,7 @@ const CoursePage = () => {
                 required
               />
             </div>
-            <button type="submit">Create Course Offering</button>
+            <button className="submit-btn" type="submit">Create Course Offering</button>
           </form>
 
           <div className="offerings-list">
@@ -411,6 +418,8 @@ const CoursePage = () => {
             )}
           </div>
         </div>
+      ) : (
+        <TeacherAssignmentPage />
       )}
     </div>
   );

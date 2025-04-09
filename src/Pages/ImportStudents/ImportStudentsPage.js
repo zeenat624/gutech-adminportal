@@ -141,7 +141,7 @@ const ImportStudentsPage = () => {
 
                     // Make a single API call for bulk creation
                     const response = await axios.post(
-                        `${apiUrl}/api/student/bulk`,
+                        `${apiUrl}/api/students/bulk`,
                         { students: studentData },
                         {
                             headers: {
@@ -188,10 +188,11 @@ const ImportStudentsPage = () => {
                             accept=".xlsx, .xls"
                             onChange={handleFileChange}
                             disabled={loading}
+                            id="file-upload-input"
                         />
-                        <div className="file-label">
+                        <label htmlFor="file-upload-input" className="file-label">
                             {file ? file.name : 'Choose Excel file'}
-                        </div>
+                        </label>
                     </div>
                     <button
                         className="download-template"

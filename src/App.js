@@ -1,8 +1,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import './styles/global.css';  // Import global styles first
+import "./App.css";  // Then import app-specific styles
 import TranscriptView from './Pages/ViewTranscript';
 import Examschedule from './Components/ExamSchedule/Examschedule';
-import './Components/ExamSchedule/Examschedule.css';
 import Signup from './Pages/LoginSignUp/Signup';
 import MainLayout from './Pages/MainLayout/MainLayout';
 
@@ -10,7 +11,6 @@ import Fees1 from "./Pages/Group1-Fees/Fees1";
 import StudentFeeHistory from "./Pages/Group1-Fees/StudentFeeHistory";
 import FeeVoucher from "./Pages/Group1-Fees/FeeVoucher";
 import AdminJobsPage from "./Pages/JobsAndBootcamps/JobsAndBootcamps";
-import "./App.css";
 
 import AdminEventCalendar from "./Pages/Event Calendar/Event Calendar";
 import Announcement from "./Pages/Announcements/Announcement";
@@ -23,6 +23,7 @@ import Attendance from './Pages/Attendance/Attendance';
 import CoursePage from "./Pages/Course/CoursePage.js";
 import AssignSectionPage from "./Pages/AssignSection/AssignSectionPage.js";
 import CourseRegistrationPage from './Pages/CourseRegistration/CourseRegistrationPage';
+import StudentMarksPage from "./Pages/StudentMarks/StudentMarksPage";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
                 <Route path="course-registration" element={<CourseRegistrationPage />} />
                 <Route path="import-students" element={<ImportStudentsPage />} />
                 <Route path="student-directory" element={<StudentDirectoryPage />} />
+                <Route path="marks" element={<StudentMarksPage />} />
 
               </Route>
             </Routes>

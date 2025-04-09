@@ -31,25 +31,11 @@ Link{
   text-decoration: none;
 }
 
-
-:root {
-  --primary-color: #4CAF50;
-  --primary-hover: #45A049;
-  --text-color: #333333;
-  --bg-color: #f4f4f4;
-  --input-bg: #ffffff;
-  --border-color: #cccccc;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
 .transcript-page {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: var(--bg-color);
-  padding: 1rem;
 }
 
 .main-content {
@@ -184,7 +170,6 @@ Link{
 .back-btn:hover {
   background-color: #d32f2f; /* Darker red on hover */
 }
-
 
 @keyframes fadeIn {
   from {

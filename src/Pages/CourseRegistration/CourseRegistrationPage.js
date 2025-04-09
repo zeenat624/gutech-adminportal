@@ -40,7 +40,7 @@ const CourseRegistrationPage = () => {
             setLoading(true);
             const token = sessionStorage.getItem('token');
             const response = await axios.get(
-                `${apiUrl}/api/course/department/${selectedDepartment}/program/${selectedProgram}/semester/${selectedSemester}`,
+                `${apiUrl}/api/courses/department/${selectedDepartment}/program/${selectedProgram}/semester/${selectedSemester}`,
                 { headers: { 'x-auth-token': token } }
             );
             setCourses(response.data);
@@ -56,7 +56,7 @@ const CourseRegistrationPage = () => {
             setLoading(true);
             const token = sessionStorage.getItem('token');
             const response = await axios.get(
-                `${apiUrl}/api/teacher`,
+                `${apiUrl}/api/teachers`,
                 { headers: { 'x-auth-token': token } }
             );
             console.log('Teachers data received:', response.data);
@@ -201,18 +201,22 @@ const CourseRegistrationPage = () => {
             setProgress(0);
 
             const token = sessionStorage.getItem('token');
+            console.log('Starting course registration process for course:', selectedCourse._id);
             
             // First, create or update sections with teacher assignments
+            console.log('Creating/updating sections:', extractedSections);
             const sectionCreationPromises = extractedSections.map(async (section) => {
                 try {
                     // Try to get existing section
                     let existingSection = null;
                     try {
+                        console.log(`Checking if section ${section} exists for course ${selectedCourse._id}`);
                         const existingSectionResponse = await axios.get(
                             `${apiUrl}/api/section/course/${selectedCourse._id}/section/${section}`,
                             { headers: { 'x-auth-token': token } }
                         );
                         existingSection = existingSectionResponse.data;
+                        console.log(`Found existing section:`, existingSection);
                     } catch (error) {
                         // If 404, section doesn't exist, which is fine
                         if (error.response && error.response.status !== 404) {
@@ -223,6 +227,7 @@ const CourseRegistrationPage = () => {
                     
                     if (existingSection) {
                         // Update existing section with teacher
+                        console.log(`Updating section ${section} with teacher ${sectionTeacherMap[section]}`);
                         return axios.put(
                             `${apiUrl}/api/section/${existingSection._id}`,
                             {
@@ -231,7 +236,8 @@ const CourseRegistrationPage = () => {
                             { headers: { 'x-auth-token': token } }
                         );
                     } else {
-                        // Create new section using the same pattern as the GET endpoint
+                        // Create new section
+                        console.log(`Creating new section ${section} with teacher ${sectionTeacherMap[section]}`);
                         return axios.post(
                             `${apiUrl}/api/section/course/${selectedCourse._id}/section/${section}`,
                             {
@@ -246,9 +252,10 @@ const CourseRegistrationPage = () => {
                 }
             });
 
+            console.log('Waiting for all sections to be created/updated');
             await Promise.all(sectionCreationPromises);
             
-            // Process students in batches to avoid overwhelming the server
+            // Process students in batches
             const batchSize = 10;
             const batches = [];
             for (let i = 0; i < preview.length; i += batchSize) {
@@ -256,9 +263,13 @@ const CourseRegistrationPage = () => {
             }
             
             let registeredCount = 0;
+            let failedRegistrations = [];
+            
+            console.log(`Processing ${preview.length} students in ${batches.length} batches`);
             
             for (let i = 0; i < batches.length; i++) {
                 const batch = batches[i];
+                console.log(`Processing batch ${i + 1}/${batches.length}`);
                 
                 // Register students in the current batch
                 await Promise.all(batch.map(async (student) => {
@@ -266,6 +277,7 @@ const CourseRegistrationPage = () => {
                         // Get the section ID for the student's section
                         let sectionResponse;
                         try {
+                            console.log(`Getting section ${student.section} for student ${student.rollNumber}`);
                             sectionResponse = await axios.get(
                                 `${apiUrl}/api/section/course/${selectedCourse._id}/section/${student.section}`,
                                 { headers: { 'x-auth-token': token } }
@@ -273,6 +285,7 @@ const CourseRegistrationPage = () => {
                         } catch (error) {
                             // If section doesn't exist, create it
                             if (error.response && error.response.status === 404) {
+                                console.log(`Section ${student.section} not found, creating it`);
                                 const createSectionResponse = await axios.post(
                                     `${apiUrl}/api/section/course/${selectedCourse._id}/section/${student.section}`,
                                     {
@@ -283,15 +296,24 @@ const CourseRegistrationPage = () => {
                                 sectionResponse = { data: createSectionResponse.data };
                             } else {
                                 console.error(`Error getting section ${student.section}:`, error);
+                                failedRegistrations.push({
+                                    student: student.rollNumber,
+                                    error: 'Failed to get/create section'
+                                });
                                 return;
                             }
                         }
                         
                         if (!sectionResponse.data) {
                             console.error(`Section ${student.section} not found for student ${student.rollNumber}`);
+                            failedRegistrations.push({
+                                student: student.rollNumber,
+                                error: 'Section not found'
+                            });
                             return;
                         }
 
+                        console.log(`Registering student ${student.rollNumber} for section ${sectionResponse.data._id}`);
                         await axios.post(
                             `${apiUrl}/api/course-registration/register`,
                             {
@@ -312,6 +334,10 @@ const CourseRegistrationPage = () => {
                         registeredCount++;
                     } catch (error) {
                         console.error(`Error registering student ${student.rollNumber}:`, error);
+                        failedRegistrations.push({
+                            student: student.rollNumber,
+                            error: error.response?.data?.message || 'Registration failed'
+                        });
                     }
                 }));
                 
@@ -320,13 +346,25 @@ const CourseRegistrationPage = () => {
                 setProgress(percentCompleted);
             }
 
+            console.log('Registration complete:', {
+                total: preview.length,
+                successful: registeredCount,
+                failed: failedRegistrations.length,
+                failedDetails: failedRegistrations
+            });
+
             setSuccess(`Successfully registered ${registeredCount} out of ${preview.length} students for ${selectedCourse.name}`);
+            if (failedRegistrations.length > 0) {
+                setError(`Failed to register ${failedRegistrations.length} students. Check console for details.`);
+            }
+            
             setFile(null);
             setPreview([]);
             setSelectedCourse(null);
             setExtractedSections([]);
             setSectionTeacherMap({});
         } catch (error) {
+            console.error('Registration error:', error);
             setError(error.response?.data?.message || 'Error registering students');
         } finally {
             setLoading(false);

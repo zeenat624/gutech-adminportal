@@ -10,9 +10,9 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'attendance', label: 'Attendance', icon: '📅' },
-    { id: 'marks', label: 'Marks', icon: '📄' },
+    { id: 'marks', label: 'Marks', icon: '📄', path: 'marks' },
     { id: 'course', label: 'Courses', icon: '📚', path: 'course' },
-    { id: "course-registration", label: "Course Registration", icon: "📝", path: "course-registration" },
+    { id: "course-registration", label: "Enroll Students", icon: "📝", path: "course-registration" },
     { id: "import-students", label: "Import Students", icon: "📥", path: "import-students" },
     { id: "student-directory", label: "Student Directory", icon: "👥", path: "student-directory" }
   ];
