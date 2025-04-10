@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
 import { useNavigate } from 'react-router-dom';
 import './ImportStudentsPage.css';
+import { FiSearch } from 'react-icons/fi';
+import NoResultsFound from '../../Components/NoResultsFound';
 
 const ImportStudentsPage = () => {
     const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -204,14 +206,31 @@ const ImportStudentsPage = () => {
                 </div>
 
                 {loading && (
-                    <div className="progress-bar">
-                        <div className="progress" style={{ width: `${progress}%` }}></div>
-                        <span>{progress}%</span>
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>Processing file...</p>
                     </div>
                 )}
 
-                {error && <div className="error-message">{error}</div>}
-                {success && <div className="success-message">{success}</div>}
+                {error && (
+                    <div className="error-message">
+                        <p>{error}</p>
+                        <button onClick={() => setError(null)} className="dismiss-error-btn">
+                            Dismiss
+                        </button>
+                    </div>
+                )}
+
+                {!loading && !error && preview.length === 0 && file && (
+                    <NoResultsFound 
+                        title="No Students to Import"
+                        message="The file you uploaded doesn't contain any valid student data. Please check your file format and try again."
+                        icon="search"
+                        actionButton={true}
+                        actionButtonText="Clear File"
+                        onActionButtonClick={() => setFile(null)}
+                    />
+                )}
 
                 {preview.length > 0 && (
                     <div className="preview-section">

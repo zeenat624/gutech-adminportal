@@ -57,16 +57,10 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
                   <span className="profile-name">{user?.name}</span>
                   <span className="profile-email">{user?.email}</span>
                 </div>
-                <div className="profile-menu">
-                  <a href="#" className="profile-menu-item">My Profile</a>
-                  <a href="#" className="profile-menu-item">Account Settings</a>
-                  <a href="#" className="profile-menu-item">Preferences</a>
-                  <div className="profile-divider"></div>
                   <a href="#" className="profile-menu-item logout" onClick={handleLogout}>
                     Logout
                   </a>
                 </div>
-              </div>
             )}
           </div>
         </nav>

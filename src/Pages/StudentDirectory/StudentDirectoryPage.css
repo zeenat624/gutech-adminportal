@@ -14,23 +14,38 @@
   align-items: flex-start;
   gap: var(--spacing-lg);
   flex-wrap: wrap;
+  background: var(--white);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  border-bottom: 3px solid var(--primary-color);
+}
+
+.header-content {
+  flex: 1;
+  min-width: 300px;
 }
 
 .header-content h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   color: var(--text-dark);
   margin: 0 0 var(--spacing-xs) 0;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .header-content p {
   color: var(--text-color);
   margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .header-actions {
   display: flex;
   gap: var(--spacing-md);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 /* Search Bar Styles */

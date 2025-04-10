@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { departments, programs, semesters } from '../../config/academicConfig';
+import { FiInfo, FiX } from 'react-icons/fi';
 import './TeacherAssignmentPage.css';
 
 const TeacherAssignmentPage = () => {
@@ -18,6 +19,7 @@ const TeacherAssignmentPage = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [editingSection, setEditingSection] = useState(null);
   const [students, setStudents] = useState([]);
+  const [showHelp, setShowHelp] = useState(true);
 
   const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -37,6 +39,24 @@ const TeacherAssignmentPage = () => {
       axios.interceptors.response.eject(interceptor);
     };
   }, []);
+
+  // Clear success message when filters change
+  useEffect(() => {
+    setSuccess(null);
+  }, [selectedDepartment, selectedProgram, selectedSemester, selectedCourse]);
+
+  // Auto-clear success message after 5 seconds
+  useEffect(() => {
+    let timer;
+    if (success) {
+      timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [success]);
 
   useEffect(() => {
     if (selectedDepartment && selectedProgram && selectedSemester) {
@@ -249,6 +269,7 @@ const TeacherAssignmentPage = () => {
     setTeachers([]);
     setSections([]);
     setEditingSection(null);
+    setSuccess(null); // Clear success message when filters are cleared
   };
 
   const startEditing = (section) => {
@@ -272,12 +293,32 @@ const TeacherAssignmentPage = () => {
 
   return (
     <div className="teacher-assignment-container">
-      <div className="page-header">
-        <div className="header-content">
-          <h1>Teacher Assignment</h1>
-          <p>Manage teacher-course assignments</p>
+    
+
+      {showHelp && (
+        <div className="help-container">
+          <div className="help-header">
+            <FiInfo className="help-icon" />
+            <h2>Teacher Assignment</h2>
+            <button className="close-help-btn" onClick={() => setShowHelp(false)}>
+              <FiX />
+            </button>
+          </div>
+          <div className="help-content">
+            <ol>
+              <li>
+                <strong>Course Registration:</strong> Ensure all courses are properly registered in the course offering system before assigning teachers.
+              </li>
+              <li>
+                <strong>Student Enrollment:</strong> First, enroll students to course sections through the student registration process, then assign teachers from this page.
+              </li>
+              <li>
+                <strong>Assignment Process:</strong> Select the department, program, semester, course, and section, then choose a teacher to complete the assignment.
+              </li>
+            </ol>
+          </div>
         </div>
-      </div>
+      )}
 
       {error && (
         <div className={`message ${error.includes('No students') ? 'info-message' : 'error-message'}`}>

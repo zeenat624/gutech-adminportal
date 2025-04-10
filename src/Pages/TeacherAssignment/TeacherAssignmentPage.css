@@ -4,6 +4,13 @@
   margin: 0 auto;
 }
 
+.help-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #495057;
+  flex-grow: 1;
+}
+
 .page-header {
   margin-bottom: 30px;
 }
@@ -17,6 +24,76 @@
 .header-content p {
   font-size: 16px;
   color: #666;
+}
+
+/* Help Container Styles */
+.help-container {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.help-icon {
+  color: #0d6efd;
+  font-size: 1.5rem;
+}
+
+.help-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #212529;
+}
+
+.close-help-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-help-btn:hover {
+  color: #dc3545;
+}
+
+.help-content {
+  color: #495057;
+}
+
+.help-content ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.help-content li {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.help-content li:last-child {
+  margin-bottom: 0;
+}
+
+.help-content strong {
+  color: #212529;
+  font-weight: 600;
 }
 
 /* Error and Success Messages */

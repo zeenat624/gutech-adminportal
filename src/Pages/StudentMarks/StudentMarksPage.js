@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { departments, programs, semesters } from '../../config/academicConfig';
 import './StudentMarksPage.css';
+import { FiSearch, FiFilter, FiDownload } from 'react-icons/fi';
+import LoadingSpinner from '../../Components/LoadingSpinner';
+import NoResultsFound from '../../Components/NoResultsFound';
 
 const StudentMarksPage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
@@ -265,16 +268,18 @@ const StudentMarksPage = () => {
       </div>
 
       {/* Marks Table */}
-      <div className="marks-table-section">
+      <div className="marks-table-container">
         {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading marks data...</p>
-          </div>
+          <LoadingSpinner message="Loading student marks..." />
         ) : marksData.length === 0 ? (
-          <div className="no-data-container">
-            <p>No marks data available for the selected filters</p>
-          </div>
+          <NoResultsFound 
+            title="No Student Marks Found"
+            message="No student marks match your current filter criteria. Try adjusting your filters or selecting different options."
+            icon="filter"
+            actionButton={true}
+            actionButtonText="Clear All Filters"
+            onActionButtonClick={clearFilters}
+          />
         ) : (
           <div className="table-container">
             <table className="marks-table">

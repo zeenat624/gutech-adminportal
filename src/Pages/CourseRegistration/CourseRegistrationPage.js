@@ -3,6 +3,8 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { departments, programs, semesters, getCurrentAcademicYear } from '../../config/academicConfig';
 import './CourseRegistrationPage.css';
+import { FiSearch } from 'react-icons/fi';
+import NoResultsFound from '../../Components/NoResultsFound';
 
 const CourseRegistrationPage = () => {
     const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -373,7 +375,12 @@ const CourseRegistrationPage = () => {
 
     return (
         <div className="course-registration-container">
-            <h2>Course Registration</h2>
+            <div className="page-header">
+                <h2>Course Registration</h2>
+                <p className="header-description">
+                    Browse and register for available courses. Use the filters below to find specific courses by semester, department, or teacher.
+                </p>
+            </div>
 
             {error && <div className="error-message">{error}</div>}
             {success && <div className="success-message">{success}</div>}
@@ -421,6 +428,21 @@ const CourseRegistrationPage = () => {
 
             {loading && (
                 <div className="loading">Loading courses...</div>
+            )}
+
+            {!loading && courses.length === 0 && (
+                <NoResultsFound 
+                    title="No Courses Found"
+                    message="No courses match your current filter criteria. Try adjusting your filters or selecting different options."
+                    icon="filter"
+                    actionButton={true}
+                    actionButtonText="Clear All Filters"
+                    onActionButtonClick={() => {
+                        setSelectedDepartment('');
+                        setSelectedProgram('');
+                        setSelectedSemester('');
+                    }}
+                />
             )}
 
             {courses.length > 0 && (

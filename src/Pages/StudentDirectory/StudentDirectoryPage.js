@@ -3,6 +3,9 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './StudentDirectoryPage.css';
 import { FiSearch, FiFilter, FiX } from 'react-icons/fi'; // Import icons
+import { departments, programs } from '../../config/academicConfig';
+import LoadingSpinner from '../../Components/LoadingSpinner';
+import NoResultsFound from '../../Components/NoResultsFound';
 
 const StudentDirectoryPage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -282,16 +285,14 @@ const StudentDirectoryPage = () => {
                 </tbody>
               </table>
             ) : (
-              <div className="no-results">
-                <div className="no-results-content">
-                  <FiSearch size={48} />
-                  <h3>No students found</h3>
-                  <p>Try adjusting your filters or search criteria</p>
-                  <button className="clear-filters-btn" onClick={clearFilters}>
-                    Clear All Filters
-                  </button>
-                </div>
-              </div>
+              <NoResultsFound 
+                title="No Students Found"
+                message="No students match your current filter criteria. Try adjusting your filters or search terms."
+                icon="search"
+                actionButton={true}
+                actionButtonText="Clear All Filters"
+                onActionButtonClick={clearFilters}
+              />
             )}
           </div>
         )}

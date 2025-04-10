@@ -4,6 +4,9 @@ import "./CoursePage.css";
 import { toast } from "react-hot-toast";
 import { departments, programs, getCurrentAcademicYear } from '../../config/academicConfig';
 import TeacherAssignmentPage from '../TeacherAssignment/TeacherAssignmentPage';
+import { FiSearch, FiFilter, FiDownload, FiInfo, FiX, FiEdit2, FiTrash2, FiPlus, FiToggleLeft, FiToggleRight } from "react-icons/fi";
+import LoadingSpinner from '../../Components/LoadingSpinner';
+import NoResultsFound from '../../Components/NoResultsFound';
 
 const CoursePage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
@@ -14,6 +17,7 @@ const CoursePage = () => {
     description: "",
     creditHours: "",
     semester: "1",
+    isActive: true
   });
 
   const [courseOffering, setCourseOffering] = useState({
@@ -29,17 +33,61 @@ const CoursePage = () => {
   const [courseOfferings, setCourseOfferings] = useState([]);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('create'); // 'create', 'offerings', or 'assignments'
+  const [activeTab, setActiveTab] = useState('create'); // 'create', 'offerings', 'assignments', 'manage'
   const [groupByOptions, setGroupByOptions] = useState({
     department: true,
     program: false,
     semester: false
   });
+  const [showCreateHelp, setShowCreateHelp] = useState(true);
+  const [showOfferingsHelp, setShowOfferingsHelp] = useState(true);
+  const [showManageHelp, setShowManageHelp] = useState(true);
+  
+  // New state for manage courses tab
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterSemester, setFilterSemester] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [filteredCourses, setFilteredCourses] = useState([]);
 
   useEffect(() => {
     fetchCourses();
     fetchCourseOfferings();
   }, []);
+
+  // Filter courses when search term, semester filter, or status filter changes
+  useEffect(() => {
+    if (activeTab === 'manage') {
+      let filtered = [...courses];
+      
+      // Apply search filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(course => 
+          course.code.toLowerCase().includes(term) || 
+          course.name.toLowerCase().includes(term) ||
+          course.description.toLowerCase().includes(term)
+        );
+      }
+      
+      // Apply semester filter
+      if (filterSemester) {
+        filtered = filtered.filter(course => 
+          course.semester.toString() === filterSemester
+        );
+      }
+      
+      // Apply status filter
+      if (filterStatus !== "") {
+        const isActive = filterStatus === "active";
+        filtered = filtered.filter(course => 
+          course.isActive === isActive
+        );
+      }
+      
+      setFilteredCourses(filtered);
+    }
+  }, [searchTerm, filterSemester, filterStatus, courses, activeTab]);
 
   const fetchCourses = async () => {
     try {
@@ -60,10 +108,10 @@ const CoursePage = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setCourse((prevState) => ({
       ...prevState,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -73,6 +121,58 @@ const CoursePage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleEditCourse = (course) => {
+    setEditingCourse(course);
+    setCourse({
+      code: course.code,
+      name: course.name,
+      description: course.description,
+      creditHours: course.creditHours,
+      semester: course.semester.toString(),
+      isActive: course.isActive
+    });
+    setActiveTab('create');
+  };
+
+  const handleDeleteCourse = async (courseId) => {
+    if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+      try {
+        setLoading(true);
+        await axios.delete(`${apiUrl}/api/courses/${courseId}`);
+        setMessage({ text: "Course deleted successfully!", type: "success" });
+        fetchCourses();
+      } catch (error) {
+        setMessage({ text: "Failed to delete course.", type: "error" });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleToggleStatus = async (courseId, currentStatus) => {
+    try {
+      setLoading(true);
+      await axios.patch(`${apiUrl}/api/courses/${courseId}/toggle-status`, {
+        isActive: !currentStatus
+      });
+      
+      // Update local state
+      setCourses(prevCourses => 
+        prevCourses.map(course => 
+          course._id === courseId 
+            ? { ...course, isActive: !currentStatus } 
+            : course
+        )
+      );
+      
+      toast.success(`Course ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      toast.error("Failed to update course status");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -87,7 +187,21 @@ const CoursePage = () => {
     setMessage({ text: "", type: "" });
 
     try {
-      const response = await axios.post(
+      if (editingCourse) {
+        // Update existing course
+        await axios.put(
+          `${apiUrl}/api/courses/${editingCourse._id}`,
+          course,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
+        );
+        setMessage({ text: "Course updated successfully!", type: "success" });
+      } else {
+        // Create new course
+        await axios.post(
         `${apiUrl}/api/courses`,
         course,
         {
@@ -96,12 +210,14 @@ const CoursePage = () => {
           }
         }
       );
-
-      setCourse({ code: "", name: "", description: "", creditHours: "", semester: "1" });
       setMessage({ text: "Course created successfully!", type: "success" });
+      }
+
+      setCourse({ code: "", name: "", description: "", creditHours: "", semester: "1", isActive: true });
+      setEditingCourse(null);
       fetchCourses(); // Refresh the courses list
     } catch (error) {
-      setMessage({ text: "Failed to create course.", type: "error" });
+      setMessage({ text: editingCourse ? "Failed to update course." : "Failed to create course.", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -204,14 +320,29 @@ const CoursePage = () => {
     );
   };
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterSemester("");
+    setFilterStatus("");
+  };
+
   return (
     <div className="course-container">
       <div className="tabs">
         <button 
           className={`tab ${activeTab === 'create' ? 'active' : ''}`}
-          onClick={() => setActiveTab('create')}
+          onClick={() => {
+            setActiveTab('create');
+            setEditingCourse(null);
+          }}
         >
           Create Course
+        </button>
+        <button 
+          className={`tab ${activeTab === 'manage' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('manage')}
+        >
+          Manage Courses
         </button>
         <button 
           className={`tab ${activeTab === 'offerings' ? 'active' : ''}`}
@@ -229,8 +360,38 @@ const CoursePage = () => {
 
       {message.text && <p className={`message ${message.type}`}>{message.text}</p>}
 
-      {activeTab === 'create' ? (
-        <form className="course-form" onSubmit={handleSubmit}>
+      {activeTab === 'create' && (
+        <>
+          {showCreateHelp && (
+            <div className="help-container">
+              <div className="help-header">
+                <FiInfo className="help-icon" />
+                <h3>Create New Course</h3>
+                <button className="close-help-btn" onClick={() => setShowCreateHelp(false)}>
+                  <FiX />
+                </button>
+              </div>
+              <div className="help-content">
+                <ol>
+                  <li>
+                    <strong>Course Information:</strong> Enter the course code, name, description, and credit hours.
+                  </li>
+                  <li>
+                    <strong>Semester:</strong> Select the semester in which this course is typically offered.
+                  </li>
+                  <li>
+                    <strong>Status:</strong> Set whether the course is active or inactive.
+                  </li>
+                  <li>
+                    <strong>Important Note:</strong> After creating a course, you must register it as a course offering before it can be assigned to teachers or students.
+                  </li>
+                </ol>
+              </div>
+            </div>
+          )}
+          <div className="course-form">
+            <h2>{editingCourse ? 'Edit Course' : 'Create New Course'}</h2>
+            <form onSubmit={handleSubmit}>
           <div>
             <label>Course Code:</label>
             <input
@@ -284,11 +445,219 @@ const CoursePage = () => {
               ))}
             </select>
           </div>
+              <div className="checkbox-field">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={course.isActive}
+                    onChange={handleChange}
+                  />
+                  Active
+                </label>
+              </div>
+              <div className="form-actions">
+                {editingCourse && (
+                  <button 
+                    type="button" 
+                    className="cancel-btn"
+                    onClick={() => {
+                      setEditingCourse(null);
+                      setCourse({ code: "", name: "", description: "", creditHours: "", semester: "1", isActive: true });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
           <button className="submit-btn" type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create Course"}
+                  {loading ? "Saving..." : editingCourse ? "Update Course" : "Create Course"}
           </button>
+              </div>
         </form>
-      ) : activeTab === 'offerings' ? (
+          </div>
+        </>
+      )}
+
+      {activeTab === 'manage' && (
+        <>
+          {showManageHelp && (
+            <div className="help-container">
+              <div className="help-header">
+                <FiInfo className="help-icon" />
+                <h3>Manage Courses</h3>
+                <button className="close-help-btn" onClick={() => setShowManageHelp(false)}>
+                  <FiX />
+                </button>
+              </div>
+              <div className="help-content">
+                <ol>
+                  <li>
+                    <strong>Search:</strong> Find courses by code, name, or description.
+                  </li>
+                  <li>
+                    <strong>Filter:</strong> Filter courses by semester or status.
+                  </li>
+                  <li>
+                    <strong>Edit:</strong> Click the edit icon to modify course details.
+                  </li>
+                  <li>
+                    <strong>Toggle Status:</strong> Click the toggle icon to activate or deactivate a course.
+                  </li>
+                  <li>
+                    <strong>Delete:</strong> Click the delete icon to remove a course (only if it's not being used in any offerings).
+                  </li>
+                </ol>
+              </div>
+            </div>
+          )}
+          
+          <div className="manage-courses-section">
+            <div className="filters-container">
+              <div className="search-container">
+                <FiSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search courses by code, name, or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+              
+              <div className="filter-container">
+                <label>Filter by Semester:</label>
+                <select 
+                  value={filterSemester} 
+                  onChange={(e) => setFilterSemester(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="">All Semesters</option>
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      Semester {i + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="filter-container">
+                <label>Filter by Status:</label>
+                <select 
+                  value={filterStatus} 
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              
+              <button 
+                className="clear-filters-btn"
+                onClick={clearFilters}
+              >
+                <FiX /> Clear Filters
+              </button>
+            </div>
+            
+            <div className="courses-table-container">
+              {loading ? (
+                <LoadingSpinner message="Loading courses..." />
+              ) : filteredCourses.length === 0 ? (
+                <NoResultsFound 
+                  title="No Courses Found"
+                  message="No courses match your search criteria. Try adjusting your filters or search terms."
+                  icon="search"
+                  actionButton={true}
+                  actionButtonText="Clear Filters"
+                  onActionButtonClick={clearFilters}
+                />
+              ) : (
+                <table className="courses-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Credit Hours</th>
+                      <th>Semester</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCourses.map((course) => (
+                      <tr key={course._id}>
+                        <td>{course.code}</td>
+                        <td>{course.name}</td>
+                        <td className="description-cell">{course.description}</td>
+                        <td>{course.creditHours}</td>
+                        <td>Semester {course.semester}</td>
+                        <td>
+                          <span className={`status-badge ${course.isActive ? 'active' : 'inactive'}`}>
+                            {course.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="action-buttons">
+                          <button 
+                            className="toggle-btn"
+                            onClick={() => handleToggleStatus(course._id, course.isActive)}
+                            title={course.isActive ? "Deactivate Course" : "Activate Course"}
+                          >
+                            {course.isActive ? <FiToggleRight /> : <FiToggleLeft />}
+                          </button>
+                          <button 
+                            className="edit-btn"
+                            onClick={() => handleEditCourse(course)}
+                            title="Edit Course"
+                          >
+                            <FiEdit2 />
+                          </button>
+                          <button 
+                            className="delete-btn"
+                            onClick={() => handleDeleteCourse(course._id)}
+                            title="Delete Course"
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'offerings' && (
+        <>
+          {showOfferingsHelp && (
+            <div className="help-container">
+              <div className="help-header">
+                <FiInfo className="help-icon" />
+                <h3>Course Offerings</h3>
+                <button className="close-help-btn" onClick={() => setShowOfferingsHelp(false)}>
+                  <FiX />
+                </button>
+              </div>
+              <div className="help-content">
+                <ol>
+                  <li>
+                    <strong>Register Courses:</strong> Create course offerings to make courses available for specific departments, programs, and semesters.
+                  </li>
+                  <li>
+                    <strong>Academic Year:</strong> Select the appropriate semester type (Fall/Spring) and year for the offering.
+                  </li>
+                  <li>
+                    <strong>Workflow:</strong> First create courses, then register them as offerings, then enroll students, and finally assign teachers.
+                  </li>
+                </ol>
+              </div>
+            </div>
+          )}
         <div className="offerings-section">
           <form className="offering-form" onSubmit={handleOfferingSubmit}>
             <div>
@@ -409,16 +778,35 @@ const CoursePage = () => {
               </div>
             </div>
             
-            {courseOfferings.length === 0 ? (
-              <p className="no-offerings">No course offerings available.</p>
-            ) : (
-              Object.entries(groupOfferings()).map(([groupName, offerings]) => 
+              <div className="content-section">
+                {loading ? (
+                  <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p>Loading course offerings...</p>
+                  </div>
+                ) : courseOfferings.length === 0 ? (
+                  <NoResultsFound 
+                    title="No Course Offerings Found"
+                    message="No course offerings match your current filter criteria. Try adjusting your filters or selecting different options."
+                    icon="filter"
+                    actionButton={true}
+                    actionButtonText="Clear All Filters"
+                    onActionButtonClick={clearFilters}
+                  />
+                ) : (
+                  <div className="offerings-container">
+                    {Object.entries(groupOfferings()).map(([groupName, offerings]) => 
                 renderOfferingsTable(groupName, offerings)
-              )
+                    )}
+                  </div>
             )}
           </div>
         </div>
-      ) : (
+          </div>
+        </>
+      )}
+
+      {activeTab === 'assignments' && (
         <TeacherAssignmentPage />
       )}
     </div>
