@@ -1,8 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { departments, programs, semesters } from '../../config/academicConfig';
-import { FiInfo, FiX, FiCheck, FiArrowRight } from 'react-icons/fi';
+import { FiInfo, FiX, FiCheck, FiSearch, FiFilter } from 'react-icons/fi';
 import './TeacherAssignmentPage.css';
+import NoResultsFound from '../../Components/NoResultsFound';
+
+// Create a separate component for each section to ensure isolation
+const SectionItem = ({ section, teachers, onAssign, loading }) => {
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  
+  // Initialize with current teacher if available
+  useEffect(() => {
+    if (section.teacher && section.teacher.id) {
+      setSelectedTeacher(section.teacher.id);
+    }
+  }, [section]);
+  
+  const handleTeacherChange = (e) => {
+    setSelectedTeacher(e.target.value);
+  };
+  
+  const handleAssign = () => {
+    onAssign(section, selectedTeacher);
+  };
+  
+  return (
+    <div className="section-item">
+      <div className="section-details">
+        <span className="section-name">{section.section}</span>
+        <span className="teacher-name">
+          {section.teacher?.name || 'Unassigned'}
+        </span>
+      </div>
+      <div className="section-actions">
+        <select
+          value={selectedTeacher}
+          onChange={handleTeacherChange}
+          className="teacher-select"
+        >
+          <option value="">Select Teacher</option>
+          {teachers.map((teacher) => (
+            <option key={teacher._id} value={teacher._id}>
+              {teacher.userId?.name || 'Unknown Teacher'} ({teacher.employeeId})
+            </option>
+          ))}
+        </select>
+        <button
+          className="assign-btn"
+          onClick={handleAssign}
+          disabled={!selectedTeacher || loading}
+        >
+          {loading ? 'Assigning...' : 'Assign'}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const TeacherAssignmentPage = () => {
   const [loading, setLoading] = useState(false);
@@ -20,7 +73,8 @@ const TeacherAssignmentPage = () => {
   const [editingSection, setEditingSection] = useState(null);
   const [students, setStudents] = useState([]);
   const [showHelp, setShowHelp] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [newSection, setNewSection] = useState({ section: '', teacherId: '' });
+  const [sectionTeachers, setSectionTeachers] = useState({});
 
   const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -72,32 +126,14 @@ const TeacherAssignmentPage = () => {
     }
   }, [selectedCourse]);
 
-  // Add this useEffect to clear error messages when section changes
   useEffect(() => {
     if (selectedSection) {
-      setError(null); // Clear any existing error messages when section changes
+      setError(null);
       fetchStudents();
     } else {
-      setStudents([]); // Clear students when no section is selected
+      setStudents([]);
     }
   }, [selectedSection]);
-
-  // Helper function to retry API calls
-  const retryApiCall = async (apiCall, maxRetries = 3) => {
-    let retries = 0;
-    while (retries < maxRetries) {
-      try {
-        return await apiCall();
-      } catch (err) {
-        retries++;
-        if (retries === maxRetries) {
-          throw err;
-        }
-        // Wait for 1 second before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  };
 
   const fetchCourses = async () => {
     try {
@@ -107,11 +143,9 @@ const TeacherAssignmentPage = () => {
       const encodedSemester = encodeURIComponent(selectedSemester);
       
       const token = sessionStorage.getItem('token');
-      const response = await retryApiCall(() => 
-        axios.get(`${apiUrl}/api/courses/department/${encodedDepartment}/program/${encodedProgram}/semester/${encodedSemester}`, {
-          headers: { 'x-auth-token': token }
-        })
-      );
+      const response = await axios.get(`${apiUrl}/api/courses/department/${encodedDepartment}/program/${encodedProgram}/semester/${encodedSemester}`, {
+        headers: { 'x-auth-token': token }
+      });
       setCourses(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch courses. Please try again.');
@@ -123,12 +157,9 @@ const TeacherAssignmentPage = () => {
   const fetchTeachers = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const response = await retryApiCall(() => 
-        axios.get(`${apiUrl}/api/teachers`, {
-          headers: { 'x-auth-token': token }
-        })
-      );
-      // Filter teachers by department on the frontend
+      const response = await axios.get(`${apiUrl}/api/teachers`, {
+        headers: { 'x-auth-token': token }
+      });
       const filteredTeachers = response.data.filter(teacher => 
         teacher.department === selectedDepartment
       );
@@ -139,15 +170,28 @@ const TeacherAssignmentPage = () => {
   };
 
   const fetchSections = async () => {
+    if (!selectedCourse) return;
+    
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token');
-      const response = await retryApiCall(() => 
-        axios.get(`${apiUrl}/api/section/course/${selectedCourse}`, {
-          headers: { 'x-auth-token': token }
-        })
-      );
+      const response = await axios.get(`${apiUrl}/api/sections/course/${selectedCourse}`, {
+        headers: { 'x-auth-token': token }
+      });
+      
+      console.log('Fetched sections:', response.data);
       setSections(response.data);
+      
+      // Initialize sectionTeachers with current teacher assignments
+      const initialSectionTeachers = {};
+      response.data.forEach(section => {
+        if (section.teacher && section.teacher.id) {
+          initialSectionTeachers[section._id] = section.teacher.id;
+        }
+      });
+      console.log('Initializing sectionTeachers with:', initialSectionTeachers);
+      setSectionTeachers(initialSectionTeachers);
+      
     } catch (err) {
       console.error('Error fetching sections:', err);
       setError(err.response?.data?.message || 'Failed to fetch sections. Please try again.');
@@ -186,36 +230,10 @@ const TeacherAssignmentPage = () => {
     }
   };
 
-  const handleAssign = async () => {
-    if (!selectedCourse || !selectedTeacher) {
-      setError('Please select both course and teacher');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const token = sessionStorage.getItem('token');
-      await retryApiCall(() => 
-        axios.post(`${apiUrl}/api/section`, {
-          courseId: selectedCourse,
-          teacherId: selectedTeacher,
-          section: `Section ${sections.length + 1}`
-        }, {
-          headers: { 'x-auth-token': token }
-        })
-      );
-      setSuccess('Teacher assigned successfully');
-      fetchSections();
-      setSelectedTeacher('');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to assign teacher. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!selectedTeacher) {
+  const handleAssign = async (section, teacherId) => {
+    console.log('handleAssign called with section:', section, 'and teacherId:', teacherId);
+    
+    if (!teacherId) {
       setError('Please select a teacher');
       return;
     }
@@ -223,20 +241,120 @@ const TeacherAssignmentPage = () => {
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token');
-      await retryApiCall(() => 
-        axios.put(`${apiUrl}/api/section/${editingSection.id}`, {
-          teacherId: selectedTeacher,
-          section: editingSection.section
+      
+      // If section is provided, update existing section
+      if (section) {
+        const sectionId = section._id || section.id;
+        
+        if (!sectionId) {
+          console.error('No section ID found in section:', section);
+          throw new Error('Invalid section ID');
+        }
+        
+        console.log('Updating teacher for section:', {
+          sectionId: sectionId,
+          teacherId: teacherId,
+          section: section.section
+        });
+        
+        // Update existing section
+        const response = await axios.put(`${apiUrl}/api/sections/${sectionId}`, {
+          teacherId: teacherId,
+          section: section.section
         }, {
           headers: { 'x-auth-token': token }
-        })
-      );
-      setSuccess('Teacher assignment updated successfully');
+        });
+        
+        console.log('API response:', response.data);
+        setSuccess('Teacher assigned successfully');
+      } else {
+        // Add new section
+        if (!selectedCourse) {
+          setError('Please select a course');
+          return;
+        }
+        
+        // Make section name mandatory for new sections
+        if (!newSection.section || newSection.section.trim() === '') {
+          setError('Please enter a section name');
+          return;
+        }
+        
+        console.log('Adding new section:', {
+          courseId: selectedCourse,
+          teacherId: teacherId,
+          section: newSection.section
+        });
+        
+        const response = await axios.post(`${apiUrl}/api/sections/addSection`, {
+          courseId: selectedCourse,
+          teacherId: teacherId,
+          section: newSection.section
+        }, {
+          headers: { 'x-auth-token': token }
+        });
+        
+        console.log('API response:', response.data);
+        setSuccess('Section added successfully');
+        setNewSection({ section: '', teacherId: '' });
+      }
+      
       fetchSections();
-      setSelectedTeacher('');
-      setEditingSection(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update assignment. Please try again.');
+      console.error('Error in handleAssign:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to assign teacher. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddSection = async () => {
+    console.log('handleAddSection called with:', {
+      selectedCourse,
+      newSection
+    });
+    
+    if (!selectedCourse) {
+      setError('Please select a course');
+      return;
+    }
+    
+    if (!newSection.teacherId) {
+      setError('Please select a teacher');
+      return;
+    }
+    
+    // Make section name mandatory for new sections
+    if (!newSection.section || newSection.section.trim() === '') {
+      setError('Please enter a section name');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const token = sessionStorage.getItem('token');
+      
+      console.log('Adding new section:', {
+        courseId: selectedCourse,
+        teacherId: newSection.teacherId,
+        section: newSection.section
+      });
+      
+      const response = await axios.post(`${apiUrl}/api/sections/addSection`, {
+        courseId: selectedCourse,
+        teacherId: newSection.teacherId,
+        section: newSection.section
+      }, {
+        headers: { 'x-auth-token': token }
+      });
+      
+      console.log('API response:', response.data);
+      setSuccess('Section added successfully');
+      setNewSection({ section: '', teacherId: '' });
+      fetchSections();
+    } catch (err) {
+      console.error('Error adding section:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to add section. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -252,236 +370,23 @@ const TeacherAssignmentPage = () => {
     setTeachers([]);
     setSections([]);
     setEditingSection(null);
-    setSuccess(null); // Clear success message when filters are cleared
+    setSuccess(null);
   };
 
-  const startEditing = (section) => {
-    setEditingSection(section);
-    setSelectedTeacher(section.teacher?.id || '');
-  };
-
-  const cancelEditing = () => {
-    setEditingSection(null);
-    setSelectedTeacher('');
-  };
-
-  const getSelectedCourseName = () => {
-    if (sections.length > 0) {
-      const course = sections[0].course;
-      return `${course.code} - ${course.name}`;
-    }
-    const course = courses.find(c => c._id === selectedCourse);
-    return course ? `${course.code} - ${course.name}` : 'Selected Course';
-  };
-
-  const handleNextStep = () => {
-    if (currentStep === 1 && selectedDepartment && selectedProgram && selectedSemester) {
-      setCurrentStep(2);
-    } else if (currentStep === 2 && selectedCourse) {
-      setCurrentStep(3);
-    }
-  };
-
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const renderStepIndicator = () => {
-    return (
-      <div className="step-indicator">
-        <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>
-          <span className="step-number">1</span>
-          <span className="step-label">Select Department</span>
-        </div>
-        <div className={`step-connector ${currentStep >= 2 ? 'active' : ''}`} />
-        <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>
-          <span className="step-number">2</span>
-          <span className="step-label">Select Course</span>
-        </div>
-        <div className={`step-connector ${currentStep >= 3 ? 'active' : ''}`} />
-        <div className={`step ${currentStep >= 3 ? 'active' : ''}`}>
-          <span className="step-number">3</span>
-          <span className="step-label">Assign Teacher</span>
-        </div>
-      </div>
-    );
-  };
-
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="step-content">
-            <h3>Select Department Information</h3>
-            <div className="filters-grid">
-              <div className="filter-group">
-                <label>Department</label>
-                <select
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className={selectedDepartment ? 'selected' : ''}
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="filter-group">
-                <label>Program</label>
-                <select
-                  value={selectedProgram}
-                  onChange={(e) => setSelectedProgram(e.target.value)}
-                  disabled={!selectedDepartment}
-                  className={selectedProgram ? 'selected' : ''}
-                >
-                  <option value="">Select Program</option>
-                  {programs.map((prog) => (
-                    <option key={prog} value={prog}>{prog}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="filter-group">
-                <label>Semester</label>
-                <select
-                  value={selectedSemester}
-                  onChange={(e) => setSelectedSemester(e.target.value)}
-                  disabled={!selectedProgram}
-                  className={selectedSemester ? 'selected' : ''}
-                >
-                  <option value="">Select Semester</option>
-                  {semesters.map((sem) => (
-                    <option key={sem} value={sem}>Semester {sem}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="step-actions">
-              <button
-                className="next-btn"
-                onClick={handleNextStep}
-                disabled={!selectedDepartment || !selectedProgram || !selectedSemester}
-              >
-                Next <FiArrowRight />
-              </button>
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-          <div className="step-content">
-            <h3>Select Course</h3>
-            <div className="filters-grid">
-              <div className="filter-group">
-                <label>Course</label>
-                <select
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  className={selectedCourse ? 'selected' : ''}
-                >
-                  <option value="">Select Course</option>
-                  {courses.map((course) => (
-                    <option key={course._id} value={course._id}>
-                      {course.code} - {course.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="step-actions">
-              <button className="prev-btn" onClick={handlePrevStep}>
-                Back
-              </button>
-              <button
-                className="next-btn"
-                onClick={handleNextStep}
-                disabled={!selectedCourse}
-              >
-                Next <FiArrowRight />
-              </button>
-            </div>
-          </div>
-        );
-      case 3:
-        return (
-          <div className="step-content">
-            <h3>Assign Teacher</h3>
-            <div className="assignment-section">
-              <div className="course-info">
-                <h4>Selected Course</h4>
-                <p>{getSelectedCourseName()}</p>
-              </div>
-              <div className="teacher-selection">
-                <label>Select Teacher</label>
-                <select
-                  value={selectedTeacher}
-                  onChange={(e) => setSelectedTeacher(e.target.value)}
-                  className={selectedTeacher ? 'selected' : ''}
-                >
-                  <option value="">Select Teacher</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher._id} value={teacher._id}>
-                      {teacher.name} ({teacher.employeeId})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="section-info">
-                <h4>Current Sections</h4>
-                {sections.length > 0 ? (
-                  <div className="sections-list">
-                    {sections.map((section) => (
-                      <div key={section._id} className="section-item">
-                        <span>{section.name}</span>
-                        <span>{section.teacher?.name || 'Unassigned'}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="no-sections">No sections available for this course</p>
-                )}
-              </div>
-              <div className="step-actions">
-                <button className="prev-btn" onClick={handlePrevStep}>
-                  Back
-                </button>
-                <button
-                  className="assign-btn"
-                  onClick={handleAssign}
-                  disabled={!selectedTeacher || loading}
-                >
-                  {loading ? 'Assigning...' : 'Assign Teacher'}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
+  const handleTeacherChange = (sectionId, teacherId) => {
+    console.log('Setting teacher for section:', sectionId, 'to:', teacherId);
+    // Create a new object to ensure React detects the state change
+    const updatedSectionTeachers = { ...sectionTeachers };
+    updatedSectionTeachers[sectionId] = teacherId;
+    setSectionTeachers(updatedSectionTeachers);
   };
 
   return (
     <div className="teacher-assignment-container">
       {showHelp && (
-        <div className="help-section">
-          <div className="help-content">
-            <FiInfo className="help-icon" />
-            <div className="help-text">
-              <h4>Teacher Assignment Guide</h4>
-              <p>Follow these steps to assign teachers to course sections:</p>
-              <ol>
-                <li>Select the department, program, and semester</li>
-                <li>Choose the course you want to assign</li>
-                <li>Select a teacher and assign them to the course</li>
-              </ol>
-            </div>
-            <button className="close-help-btn" onClick={() => setShowHelp(false)}>
-              <FiX />
-            </button>
-          </div>
+        <div className="course-important-note">
+          <p>In case, no sections exist. Create a new section.</p>
+          <button className="course-close-note-btn" onClick={() => setShowHelp(false)}>×</button>
         </div>
       )}
 
@@ -504,8 +409,140 @@ const TeacherAssignmentPage = () => {
         </div>
       )}
 
-      {renderStepIndicator()}
-      {renderStepContent()}
+      <div className="filters-section">
+        <div className="filters-header">
+          <h3>Filter Courses</h3>
+          <button className="clear-filters-btn" onClick={clearFilters}>
+            Clear Filters
+          </button>
+        </div>
+        <div className="filters-grid">
+          <div className="filter-group">
+            <label>Department</label>
+            <select
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              className={selectedDepartment ? 'selected' : ''}
+            >
+              <option value="">Select Department</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Program</label>
+            <select
+              value={selectedProgram}
+              onChange={(e) => setSelectedProgram(e.target.value)}
+              disabled={!selectedDepartment}
+              className={selectedProgram ? 'selected' : ''}
+            >
+              <option value="">Select Program</option>
+              {programs.map((prog) => (
+                <option key={prog} value={prog}>{prog}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Semester</label>
+            <select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
+              disabled={!selectedProgram}
+              className={selectedSemester ? 'selected' : ''}
+            >
+              <option value="">Select Semester</option>
+              {semesters.map((sem) => (
+                <option key={sem} value={sem}>Semester {sem}</option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Course</label>
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              disabled={!selectedSemester}
+              className={selectedCourse ? 'selected' : ''}
+            >
+              <option value="">Select Course</option>
+              {courses.map((course) => (
+                <option key={course._id} value={course._id}>
+                  {course.code} - {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {selectedCourse && (
+        <div className="assignment-section">
+          <div className="course-info">
+            <h4>Selected Course</h4>
+            <p>{courses.find(c => c._id === selectedCourse)?.code} - {courses.find(c => c._id === selectedCourse)?.name}</p>
+          </div>
+
+          <div className="section-info">
+            <h4>Current Sections</h4>
+            {loading ? (
+              <div className="loading-spinner">Loading sections...</div>
+            ) : (
+              <>
+                <div className="sections-list">
+                  {sections.length > 0 ? (
+                    sections.map((section) => (
+                      <SectionItem 
+                        key={section._id || section.id}
+                        section={section}
+                        teachers={teachers}
+                        onAssign={handleAssign}
+                        loading={loading}
+                      />
+                    ))
+                  ) : (
+                    <p className="no-sections">No sections available for this course. Create a section to proceed.</p>
+                  )}
+                </div>
+
+                <div className="add-section-form">
+                  <h4>Add New Section</h4>
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      placeholder="Section Name (required)"
+                      value={newSection.section}
+                      onChange={(e) => setNewSection({ ...newSection, section: e.target.value })}
+                      className="section-input"
+                      required
+                    />
+                    <select
+                      value={newSection.teacherId}
+                      onChange={(e) => setNewSection({ ...newSection, teacherId: e.target.value })}
+                      className="teacher-select"
+                    >
+                      <option value="">Select Teacher</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher._id} value={teacher._id}>
+                          {teacher.userId?.name || 'Unknown Teacher'} ({teacher.employeeId})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="assign-btn"
+                      onClick={handleAddSection}
+                      disabled={!newSection.teacherId || !newSection.section || loading}
+                    >
+                      {loading ? 'Adding...' : 'Add Section'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

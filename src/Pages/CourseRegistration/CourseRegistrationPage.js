@@ -214,7 +214,7 @@ const CourseRegistrationPage = () => {
                     try {
                         console.log(`Checking if section ${section} exists for course ${selectedCourse._id}`);
                         const existingSectionResponse = await axios.get(
-                            `${apiUrl}/api/section/course/${selectedCourse._id}/section/${section}`,
+                            `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${section}`,
                             { headers: { 'x-auth-token': token } }
                         );
                         existingSection = existingSectionResponse.data;
@@ -231,7 +231,7 @@ const CourseRegistrationPage = () => {
                         // Update existing section with teacher
                         console.log(`Updating section ${section} with teacher ${sectionTeacherMap[section]}`);
                         return axios.put(
-                            `${apiUrl}/api/section/${existingSection._id}`,
+                            `${apiUrl}/api/sections/${existingSection._id}`,
                             {
                                 teacherId: sectionTeacherMap[section]
                             },
@@ -241,7 +241,7 @@ const CourseRegistrationPage = () => {
                         // Create new section
                         console.log(`Creating new section ${section} with teacher ${sectionTeacherMap[section]}`);
                         return axios.post(
-                            `${apiUrl}/api/section/course/${selectedCourse._id}/section/${section}`,
+                            `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${section}`,
                             {
                                 teacherId: sectionTeacherMap[section]
                             },
@@ -281,7 +281,7 @@ const CourseRegistrationPage = () => {
                         try {
                             console.log(`Getting section ${student.section} for student ${student.rollNumber}`);
                             sectionResponse = await axios.get(
-                                `${apiUrl}/api/section/course/${selectedCourse._id}/section/${student.section}`,
+                                `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${student.section}`,
                                 { headers: { 'x-auth-token': token } }
                             );
                         } catch (error) {
@@ -289,7 +289,7 @@ const CourseRegistrationPage = () => {
                             if (error.response && error.response.status === 404) {
                                 console.log(`Section ${student.section} not found, creating it`);
                                 const createSectionResponse = await axios.post(
-                                    `${apiUrl}/api/section/course/${selectedCourse._id}/section/${student.section}`,
+                                    `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${student.section}`,
                                     {
                                         teacherId: sectionTeacherMap[student.section]
                                     },

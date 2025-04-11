@@ -77,7 +77,7 @@ const StudentMarksPage = () => {
         // Use the correct API endpoint for sections with auth token
         // Make sure we're using the course ID, not the course name
         const sectionRes = await axios.get(
-          `${apiUrl}/api/section/course-enrollment/${filters.course}`,
+          `${apiUrl}/api/sections/course-enrollment/${filters.course}`,
           {
             headers: {
               'x-auth-token': getAuthToken()
