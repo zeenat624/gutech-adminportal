@@ -24,7 +24,7 @@ function App() {
 
           <Route path="/*" element={<MainLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="Class Schedule" element={<ClassSchedule />} />
+            <Route path="class-schedule" element={<ClassSchedule />} />
             <Route path="Attendance" element={<Attendance />} />
             <Route path="Course" element={<CoursePage />} />
             <Route path="course-registration" element={<CourseRegistrationPage />} />

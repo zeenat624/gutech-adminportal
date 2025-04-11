@@ -14,7 +14,8 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
     { id: 'course', label: 'Courses', icon: '📚', path: 'course' },
     { id: "course-registration", label: "Enroll Students", icon: "📝", path: "course-registration" },
     { id: "import-students", label: "Import Students", icon: "📥", path: "import-students" },
-    { id: "student-directory", label: "Student Directory", icon: "👥", path: "student-directory" }
+    { id: "student-directory", label: "Student Directory", icon: "👥", path: "student-directory" },
+    { id: "class-schedule", label: "Class Schedule", icon: "📅", path: "class-schedule" }
   ];
   
   return (
