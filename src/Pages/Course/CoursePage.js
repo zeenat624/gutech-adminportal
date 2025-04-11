@@ -42,6 +42,7 @@ const CoursePage = () => {
   const [showCreateHelp, setShowCreateHelp] = useState(true);
   const [showOfferingsHelp, setShowOfferingsHelp] = useState(true);
   const [showManageHelp, setShowManageHelp] = useState(true);
+  const [showAssignmentsHelp, setShowAssignmentsHelp] = useState(true);
   
   // New state for manage courses tab
   const [searchTerm, setSearchTerm] = useState("");
@@ -363,30 +364,9 @@ const CoursePage = () => {
       {activeTab === 'create' && (
         <>
           {showCreateHelp && (
-            <div className="help-container">
-              <div className="help-header">
-                <FiInfo className="help-icon" />
-                <h3>Create New Course</h3>
-                <button className="close-help-btn" onClick={() => setShowCreateHelp(false)}>
-                  <FiX />
-                </button>
-              </div>
-              <div className="help-content">
-                <ol>
-                  <li>
-                    <strong>Course Information:</strong> Enter the course code, name, description, and credit hours.
-                  </li>
-                  <li>
-                    <strong>Semester:</strong> Select the semester in which this course is typically offered.
-                  </li>
-                  <li>
-                    <strong>Status:</strong> Set whether the course is active or inactive.
-                  </li>
-                  <li>
-                    <strong>Important Note:</strong> After creating a course, you must register it as a course offering before it can be assigned to teachers or students.
-                  </li>
-                </ol>
-              </div>
+            <div className="course-important-note">
+              <p>Create Course: Add new courses to the system. After creating, register it as a course offering, then assign to students, then teachers.</p>
+              <button className="course-close-note-btn" onClick={() => setShowCreateHelp(false)}>×</button>
             </div>
           )}
           <div className="course-form">
@@ -481,33 +461,9 @@ const CoursePage = () => {
       {activeTab === 'manage' && (
         <>
           {showManageHelp && (
-            <div className="help-container">
-              <div className="help-header">
-                <FiInfo className="help-icon" />
-                <h3>Manage Courses</h3>
-                <button className="close-help-btn" onClick={() => setShowManageHelp(false)}>
-                  <FiX />
-                </button>
-              </div>
-              <div className="help-content">
-                <ol>
-                  <li>
-                    <strong>Search:</strong> Find courses by code, name, or description.
-                  </li>
-                  <li>
-                    <strong>Filter:</strong> Filter courses by semester or status.
-                  </li>
-                  <li>
-                    <strong>Edit:</strong> Click the edit icon to modify course details.
-                  </li>
-                  <li>
-                    <strong>Toggle Status:</strong> Click the toggle icon to activate or deactivate a course.
-                  </li>
-                  <li>
-                    <strong>Delete:</strong> Click the delete icon to remove a course (only if it's not being used in any offerings).
-                  </li>
-                </ol>
-              </div>
+            <div className="course-important-note">
+              <p>Manage Courses: View, edit, or delete existing courses. Use filters to find specific courses.</p>
+              <button className="course-close-note-btn" onClick={() => setShowManageHelp(false)}>×</button>
             </div>
           )}
           
@@ -635,27 +591,9 @@ const CoursePage = () => {
       {activeTab === 'offerings' && (
         <>
           {showOfferingsHelp && (
-            <div className="help-container">
-              <div className="help-header">
-                <FiInfo className="help-icon" />
-                <h3>Course Offerings</h3>
-                <button className="close-help-btn" onClick={() => setShowOfferingsHelp(false)}>
-                  <FiX />
-                </button>
-              </div>
-              <div className="help-content">
-                <ol>
-                  <li>
-                    <strong>Register Courses:</strong> Create course offerings to make courses available for specific departments, programs, and semesters.
-                  </li>
-                  <li>
-                    <strong>Academic Year:</strong> Select the appropriate semester type (Fall/Spring) and year for the offering.
-                  </li>
-                  <li>
-                    <strong>Workflow:</strong> First create courses, then register them as offerings, then enroll students, and finally assign teachers.
-                  </li>
-                </ol>
-              </div>
+            <div className="course-important-note">
+              <p>Course Offerings: Schedule courses for specific semesters. Select department and program to create offerings.</p>
+              <button className="course-close-note-btn" onClick={() => setShowOfferingsHelp(false)}>×</button>
             </div>
           )}
         <div className="offerings-section">
@@ -807,7 +745,7 @@ const CoursePage = () => {
       )}
 
       {activeTab === 'assignments' && (
-        <TeacherAssignmentPage />
+          <TeacherAssignmentPage />
       )}
     </div>
   );

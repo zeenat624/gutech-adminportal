@@ -4,77 +4,97 @@
   margin: 0 auto;
 }
 
-/* Help Container Styles */
-.help-container {
-  background-color: #f8f9fa;
-  border-left: 4px solid #991D20;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 25px;
-  overflow: hidden;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.help-header {
-  background-color: #f1f3f5;
-  padding: 15px 20px;
+/* Important note - Standalone style */
+.course-important-note {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
   display: flex;
-  align-items: center;
-  border-bottom: 1px solid #e9ecef;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #666;
+  border-left: 3px solid #999;
+  width: 100%;
+  position: relative;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.help-icon {
-  color: #991D20;
-  font-size: 20px;
-  margin-right: 10px;
-}
-
-.help-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #495057;
-  flex-grow: 1;
-}
-
-.close-help-btn {
-  background: none;
-  border: none;
-  color: #868e96;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 5px;
+.course-important-note::before {
+  content: "!";
+  min-width: 18px;
+  height: 18px;
+  background: #999;
+  color: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
-.close-help-btn:hover {
-  color: #495057;
-}
-
-.help-content {
-  padding: 20px;
-}
-
-.help-content ol {
+.course-important-note p {
   margin: 0;
-  padding-left: 20px;
-}
-
-.help-content li {
-  margin-bottom: 12px;
   line-height: 1.5;
-  color: #495057;
+  flex: 1;
 }
 
-.help-content li:last-child {
-  margin-bottom: 0;
+.course-close-note-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
-.help-content strong {
-  color: #212529;
-  font-weight: 600;
+.course-close-note-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+/* Help Container Animation */
+@keyframes slideInHelp {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.help-container {
+  animation: slideInHelp 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .help-container {
+    margin: 0 0 20px;
+    padding: 14px 16px;
+  }
+  
+  .course-important-note {
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
 }
 
 .tabs {

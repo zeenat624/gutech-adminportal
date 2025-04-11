@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { departments, programs, semesters } from '../../config/academicConfig';
-import { FiInfo, FiX } from 'react-icons/fi';
+import { FiInfo, FiX, FiCheck, FiArrowRight } from 'react-icons/fi';
 import './TeacherAssignmentPage.css';
 
 const TeacherAssignmentPage = () => {
@@ -20,6 +20,7 @@ const TeacherAssignmentPage = () => {
   const [editingSection, setEditingSection] = useState(null);
   const [students, setStudents] = useState([]);
   const [showHelp, setShowHelp] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
@@ -241,24 +242,6 @@ const TeacherAssignmentPage = () => {
     }
   };
 
-  const handleRemove = async (sectionId) => {
-    try {
-      setLoading(true);
-      const token = sessionStorage.getItem('token');
-      await retryApiCall(() => 
-        axios.delete(`${apiUrl}/api/section/${sectionId}`, {
-          headers: { 'x-auth-token': token }
-        })
-      );
-      setSuccess('Section removed successfully');
-      fetchSections();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to remove section. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const clearFilters = () => {
     setSelectedDepartment('');
     setSelectedProgram('');
@@ -291,236 +274,238 @@ const TeacherAssignmentPage = () => {
     return course ? `${course.code} - ${course.name}` : 'Selected Course';
   };
 
+  const handleNextStep = () => {
+    if (currentStep === 1 && selectedDepartment && selectedProgram && selectedSemester) {
+      setCurrentStep(2);
+    } else if (currentStep === 2 && selectedCourse) {
+      setCurrentStep(3);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const renderStepIndicator = () => {
+    return (
+      <div className="step-indicator">
+        <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>
+          <span className="step-number">1</span>
+          <span className="step-label">Select Department</span>
+        </div>
+        <div className={`step-connector ${currentStep >= 2 ? 'active' : ''}`} />
+        <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>
+          <span className="step-number">2</span>
+          <span className="step-label">Select Course</span>
+        </div>
+        <div className={`step-connector ${currentStep >= 3 ? 'active' : ''}`} />
+        <div className={`step ${currentStep >= 3 ? 'active' : ''}`}>
+          <span className="step-number">3</span>
+          <span className="step-label">Assign Teacher</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="step-content">
+            <h3>Select Department Information</h3>
+            <div className="filters-grid">
+              <div className="filter-group">
+                <label>Department</label>
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className={selectedDepartment ? 'selected' : ''}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="filter-group">
+                <label>Program</label>
+                <select
+                  value={selectedProgram}
+                  onChange={(e) => setSelectedProgram(e.target.value)}
+                  disabled={!selectedDepartment}
+                  className={selectedProgram ? 'selected' : ''}
+                >
+                  <option value="">Select Program</option>
+                  {programs.map((prog) => (
+                    <option key={prog} value={prog}>{prog}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="filter-group">
+                <label>Semester</label>
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                  disabled={!selectedProgram}
+                  className={selectedSemester ? 'selected' : ''}
+                >
+                  <option value="">Select Semester</option>
+                  {semesters.map((sem) => (
+                    <option key={sem} value={sem}>Semester {sem}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="step-actions">
+              <button
+                className="next-btn"
+                onClick={handleNextStep}
+                disabled={!selectedDepartment || !selectedProgram || !selectedSemester}
+              >
+                Next <FiArrowRight />
+              </button>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="step-content">
+            <h3>Select Course</h3>
+            <div className="filters-grid">
+              <div className="filter-group">
+                <label>Course</label>
+                <select
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                  className={selectedCourse ? 'selected' : ''}
+                >
+                  <option value="">Select Course</option>
+                  {courses.map((course) => (
+                    <option key={course._id} value={course._id}>
+                      {course.code} - {course.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="step-actions">
+              <button className="prev-btn" onClick={handlePrevStep}>
+                Back
+              </button>
+              <button
+                className="next-btn"
+                onClick={handleNextStep}
+                disabled={!selectedCourse}
+              >
+                Next <FiArrowRight />
+              </button>
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="step-content">
+            <h3>Assign Teacher</h3>
+            <div className="assignment-section">
+              <div className="course-info">
+                <h4>Selected Course</h4>
+                <p>{getSelectedCourseName()}</p>
+              </div>
+              <div className="teacher-selection">
+                <label>Select Teacher</label>
+                <select
+                  value={selectedTeacher}
+                  onChange={(e) => setSelectedTeacher(e.target.value)}
+                  className={selectedTeacher ? 'selected' : ''}
+                >
+                  <option value="">Select Teacher</option>
+                  {teachers.map((teacher) => (
+                    <option key={teacher._id} value={teacher._id}>
+                      {teacher.name} ({teacher.employeeId})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="section-info">
+                <h4>Current Sections</h4>
+                {sections.length > 0 ? (
+                  <div className="sections-list">
+                    {sections.map((section) => (
+                      <div key={section._id} className="section-item">
+                        <span>{section.name}</span>
+                        <span>{section.teacher?.name || 'Unassigned'}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="no-sections">No sections available for this course</p>
+                )}
+              </div>
+              <div className="step-actions">
+                <button className="prev-btn" onClick={handlePrevStep}>
+                  Back
+                </button>
+                <button
+                  className="assign-btn"
+                  onClick={handleAssign}
+                  disabled={!selectedTeacher || loading}
+                >
+                  {loading ? 'Assigning...' : 'Assign Teacher'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="teacher-assignment-container">
-    
-
       {showHelp && (
-        <div className="help-container">
-          <div className="help-header">
+        <div className="help-section">
+          <div className="help-content">
             <FiInfo className="help-icon" />
-            <h2>Teacher Assignment</h2>
+            <div className="help-text">
+              <h4>Teacher Assignment Guide</h4>
+              <p>Follow these steps to assign teachers to course sections:</p>
+              <ol>
+                <li>Select the department, program, and semester</li>
+                <li>Choose the course you want to assign</li>
+                <li>Select a teacher and assign them to the course</li>
+              </ol>
+            </div>
             <button className="close-help-btn" onClick={() => setShowHelp(false)}>
               <FiX />
             </button>
-          </div>
-          <div className="help-content">
-            <ol>
-              <li>
-                <strong>Course Registration:</strong> Ensure all courses are properly registered in the course offering system before assigning teachers.
-              </li>
-              <li>
-                <strong>Student Enrollment:</strong> First, enroll students to course sections through the student registration process, then assign teachers from this page.
-              </li>
-              <li>
-                <strong>Assignment Process:</strong> Select the department, program, semester, course, and section, then choose a teacher to complete the assignment.
-              </li>
-            </ol>
           </div>
         </div>
       )}
 
       {error && (
-        <div className={`message ${error.includes('No students') ? 'info-message' : 'error-message'}`}>
+        <div className="error-message">
           {error}
-          <button 
-            className="dismiss-button"
-            onClick={() => setError(null)}
-          >
-            ×
+          <button className="dismiss-btn" onClick={() => setError(null)}>
+            <FiX />
           </button>
         </div>
       )}
 
       {success && (
         <div className="success-message">
-          <span>{success}</span>
-          <button className="dismiss-success-btn" onClick={() => setSuccess(null)}>×</button>
+          <FiCheck className="success-icon" />
+          {success}
+          <button className="dismiss-btn" onClick={() => setSuccess(null)}>
+            <FiX />
+          </button>
         </div>
       )}
 
-      <div className="filters-section">
-        <div className="filters-grid">
-          <div className="filter-group">
-            <label>Department</label>
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-            >
-              <option value="">Select Department</option>
-              {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Program</label>
-            <select
-              value={selectedProgram}
-              onChange={(e) => setSelectedProgram(e.target.value)}
-              disabled={!selectedDepartment}
-            >
-              <option value="">Select Program</option>
-              {programs.map((prog) => (
-                <option key={prog} value={prog}>
-                  {prog}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Semester</label>
-            <select
-              value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
-              disabled={!selectedProgram}
-            >
-              <option value="">Select Semester</option>
-              {semesters.map((sem) => (
-                <option key={sem} value={sem}>
-                  Semester {sem}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Course</label>
-            <select
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              disabled={!selectedSemester}
-            >
-              <option value="">Select Course</option>
-              {courses.map((course) => (
-                <option key={course._id} value={course._id}>
-                  {course.code} - {course.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <button className="clear-filters-btn" onClick={clearFilters}>
-          Clear Filters
-        </button>
-      </div>
-
-      {selectedCourse && (
-        <div className="assignment-section">
-          <div className="assignment-header">
-            <h2>{getSelectedCourseName()}</h2>
-            <div className="assignment-controls">
-              <select
-                value={selectedTeacher}
-                onChange={(e) => setSelectedTeacher(e.target.value)}
-                className={editingSection ? "editing-select" : ""}
-              >
-                <option value="">Select Teacher</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher._id} value={teacher._id}>
-                    {teacher.userId?.name || 'Unknown'} ({teacher.employeeId})
-                  </option>
-                ))}
-              </select>
-              {editingSection ? (
-                <div className="edit-controls">
-                  <button
-                    className="update-btn"
-                    onClick={handleUpdate}
-                    disabled={!selectedTeacher || loading}
-                  >
-                    Update
-                  </button>
-                  <button
-                    className="cancel-btn"
-                    onClick={cancelEditing}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  className="assign-btn"
-                  onClick={handleAssign}
-                  disabled={!selectedTeacher || loading}
-                >
-                  Assign
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="assignments-table-section">
-            <h3>Current Sections</h3>
-            {loading ? (
-              <div className="loading-container">
-                <div className="loading-spinner" />
-                <p>Loading sections...</p>
-              </div>
-            ) : sections && sections.length > 0 ? (
-              <div className="table-container">
-                <table className="assignments-table">
-                  <thead>
-                    <tr>
-                      <th>Section</th>
-                      <th>Teacher Name</th>
-                      <th>Employee ID</th>
-                      <th>Department</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sections.map((section) => (
-                      <tr 
-                        key={section.id} 
-                        className={`${editingSection && editingSection.id === section.id ? "editing-row" : ""} ${selectedSection === section.id ? "selected-row" : ""}`}
-                        onClick={() => setSelectedSection(section.id)}
-                      >
-                        <td>{section.section}</td>
-                        <td>{section.teacher?.name || 'Unassigned'}</td>
-                        <td>{section.teacher?.employeeId || 'N/A'}</td>
-                        <td>{section.teacher?.department || 'Unknown'}</td>
-                        <td className="action-buttons">
-                          <button
-                            className="edit-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditing(section);
-                            }}
-                            disabled={editingSection !== null}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="remove-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemove(section.id);
-                            }}
-                            disabled={editingSection !== null}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="no-data-container">
-                <p>No sections found for this course</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {renderStepIndicator()}
+      {renderStepContent()}
     </div>
   );
 };

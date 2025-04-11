@@ -22,6 +22,8 @@ const StudentMarksPage = () => {
     courses: [],
     sections: []
   });
+  const [showHelp, setShowHelp] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Get auth token from session storage
   const getAuthToken = () => {
@@ -163,14 +165,33 @@ const StudentMarksPage = () => {
     }, 0);
   };
 
+  // Filter marks data based on search query
+  const filteredMarksData = marksData.filter(student => 
+    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="student-marks-container">
       <div className="page-header">
         <div className="header-content">
           <h1>Student Marks</h1>
-          <p>View and manage student marks across different courses and assessments</p>
+          <p>View and manage student marks for different courses and sections</p>
         </div>
       </div>
+
+      {showHelp && (
+        <div className="help-text">
+          <p>Once all filters are selected, the marks table will be displayed below.</p>
+          <button 
+            className="close-help" 
+            onClick={() => setShowHelp(false)}
+            aria-label="Close help text"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -267,27 +288,40 @@ const StudentMarksPage = () => {
         </button>
       </div>
 
-      {/* Marks Table */}
-      <div className="marks-table-container">
-        {loading ? (
-          <LoadingSpinner message="Loading student marks..." />
-        ) : marksData.length === 0 ? (
-          <NoResultsFound 
-            title="No Student Marks Found"
-            message="No student marks match your current filter criteria. Try adjusting your filters or selecting different options."
-            icon="filter"
-            actionButton={true}
-            actionButtonText="Clear All Filters"
-            onActionButtonClick={clearFilters}
-          />
-        ) : (
-          <div className="table-container">
+      {/* Marks Table Section */}
+      <div className="marks-table-section">
+        <div className="table-header">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search by name or roll number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </div>
+        <div className="table-container">
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading marks data...</p>
+            </div>
+          ) : error ? (
+            <div className="error-container">
+              <p>{error}</p>
+            </div>
+          ) : filteredMarksData.length === 0 ? (
+            <div className="no-data-container">
+              <p>No marks data found</p>
+            </div>
+          ) : (
             <table className="marks-table">
               <thead>
                 <tr>
                   <th>Roll Number</th>
                   <th>Student Name</th>
-                  {marksData.length > 0 && marksData[0].assessmentTypes?.map((type, index) => (
+                  {filteredMarksData.length > 0 && filteredMarksData[0].assessmentTypes?.map((type, index) => (
                     <th key={index}>
                       {type.type.charAt(0).toUpperCase() + type.type.slice(1)} ({type.totalWeightage}%)
                     </th>
@@ -296,7 +330,7 @@ const StudentMarksPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {marksData.map(student => (
+                {filteredMarksData.map(student => (
                   <tr key={student.id}>
                     <td>{student.rollNumber}</td>
                     <td>{student.name}</td>
@@ -312,8 +346,8 @@ const StudentMarksPage = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

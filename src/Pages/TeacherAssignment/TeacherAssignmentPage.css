@@ -1,99 +1,70 @@
 .teacher-assignment-container {
-  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem;
 }
 
-.help-header h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #495057;
-  flex-grow: 1;
-}
-
-.page-header {
-  margin-bottom: 30px;
-}
-
-.header-content h1 {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.header-content p {
-  font-size: 16px;
-  color: #666;
-}
-
-/* Help Container Styles */
-.help-container {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  position: relative;
-}
-
-.help-header {
+/* Important note - Standalone style */
+.important-note {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #666;
+  border-left: 3px solid #999;
+  width: 100%;
+  position: relative;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.help-icon {
-  color: #0d6efd;
-  font-size: 1.5rem;
-}
-
-.help-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #212529;
-}
-
-.close-help-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0.25rem;
+.important-note::before {
+  content: "!";
+  min-width: 18px;
+  height: 18px;
+  background: #999;
+  color: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
-.close-help-btn:hover {
-  color: #dc3545;
-}
-
-.help-content {
-  color: #495057;
-}
-
-.help-content ol {
+.important-note p {
   margin: 0;
-  padding-left: 1.5rem;
-}
-
-.help-content li {
-  margin-bottom: 0.75rem;
   line-height: 1.5;
+  flex: 1;
 }
 
-.help-content li:last-child {
-  margin-bottom: 0;
+.close-note-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
-.help-content strong {
-  color: #212529;
-  font-weight: 600;
+.close-note-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
 }
 
 /* Error and Success Messages */
@@ -147,40 +118,44 @@
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 }
 
 .filter-group label {
-  font-size: 14px;
   font-weight: 500;
-  margin-bottom: 8px;
-  color: #555;
+  color: #333;
 }
 
 .filter-group select {
-  padding: 10px 12px;
+  padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  background-color: white;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .filter-group select:focus {
   border-color: #2196f3;
   outline: none;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
 }
 
 .filter-group select:disabled {
-  background-color: #f9f9f9;
+  background-color: #f8f9fa;
   cursor: not-allowed;
+}
+
+.filter-group select.selected {
+  border-color: #2196f3;
+  background-color: #f8f9fa;
 }
 
 .clear-filters-btn {
@@ -200,173 +175,298 @@
 
 /* Assignment Section */
 .assignment-section {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.assignment-header {
+.course-info {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.course-info h4 {
+  margin: 0 0 0.5rem;
+  color: #333;
+}
+
+.course-info p {
+  margin: 0;
+  color: #666;
+}
+
+.teacher-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.teacher-selection label {
+  font-weight: 500;
+  color: #333;
+}
+
+.teacher-selection select {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.teacher-selection select:focus {
+  border-color: #2196f3;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.section-info {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.section-info h4 {
+  margin: 0 0 1rem;
+  color: #333;
+}
+
+.sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.assignment-header h2 {
-  font-size: 22px;
-  color: #333;
-  margin: 0;
-}
-
-.assignment-controls {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.assignment-controls select {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
+  padding: 0.75rem;
+  background-color: white;
   border-radius: 4px;
-  min-width: 250px;
-  font-size: 14px;
+  border: 1px solid #e9ecef;
 }
 
-.assignment-controls select.editing-select {
-  border-color: #2196f3;
-  background-color: #e3f2fd;
+.no-sections {
+  color: #666;
+  text-align: center;
+  padding: 1rem;
 }
 
-.edit-controls {
+/* Messages */
+.error-message, .success-message {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
 }
 
-.assign-btn, .update-btn, .cancel-btn {
-  padding: 10px 15px;
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.success-message {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.success-icon {
+  font-size: 1.25rem;
+}
+
+.dismiss-btn {
+  margin-left: auto;
+  background: none;
   border: none;
-  border-radius: 4px;
+  color: inherit;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
 }
 
-.assign-btn {
-  background-color: #4caf50;
-  color: white;
+.dismiss-btn:hover {
+  opacity: 0.8;
 }
 
-.assign-btn:hover {
-  background-color: #388e3c;
+/* Help Section */
+.help-section {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e9ecef;
 }
 
-.update-btn {
+.help-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  position: relative;
+}
+
+.help-icon {
+  color: #2196f3;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.help-text {
+  flex: 1;
+}
+
+.help-text h4 {
+  margin: 0 0 0.5rem;
+  color: #333;
+}
+
+.help-text p {
+  margin: 0 0 0.5rem;
+  color: #666;
+}
+
+.help-text ol {
+  margin: 0.5rem 0 0;
+  padding-left: 1.5rem;
+  color: #666;
+}
+
+.close-help-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-help-btn:hover {
+  color: #333;
+}
+
+/* Step Indicator */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  flex: 1;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.step.active .step-number {
   background-color: #2196f3;
   color: white;
 }
 
-.update-btn:hover {
-  background-color: #1976d2;
+.step-label {
+  font-size: 0.875rem;
+  color: #666;
+  text-align: center;
 }
 
-.cancel-btn {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.cancel-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.assign-btn:disabled, .update-btn:disabled, .cancel-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Assignments Table */
-.assignments-table-section {
-  margin-top: 20px;
-}
-
-.assignments-table-section h3 {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 15px;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.assignments-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-.assignments-table th {
-  background-color: #f5f5f5;
-  padding: 12px 15px;
-  text-align: left;
+.step.active .step-label {
+  color: #2196f3;
   font-weight: 500;
-  color: #555;
-  border-bottom: 2px solid #ddd;
 }
 
-.assignments-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background-color: #e9ecef;
+  margin: 0 1rem;
+}
+
+.step-connector.active {
+  background-color: #2196f3;
+}
+
+/* Step Content */
+.step-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.step-content h3 {
+  margin: 0 0 1.5rem;
   color: #333;
+  font-size: 1.25rem;
 }
 
-.assignments-table tr:hover {
-  background-color: #f9f9f9;
-}
-
-.assignments-table tr.editing-row {
-  background-color: #e3f2fd;
-}
-
-.action-buttons {
+/* Step Actions */
+.step-actions {
   display: flex;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
-.edit-btn, .remove-btn {
-  padding: 6px 12px;
+.prev-btn, .next-btn, .assign-btn {
+  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 4px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   transition: all 0.2s;
 }
 
-.edit-btn {
+.prev-btn {
+  background-color: #f8f9fa;
+  color: #666;
+}
+
+.prev-btn:hover {
+  background-color: #e9ecef;
+}
+
+.next-btn, .assign-btn {
   background-color: #2196f3;
   color: white;
 }
 
-.edit-btn:hover {
+.next-btn:hover, .assign-btn:hover {
   background-color: #1976d2;
 }
 
-.remove-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-.remove-btn:hover {
-  background-color: #d32f2f;
-}
-
-.edit-btn:disabled, .remove-btn:disabled {
-  opacity: 0.5;
+.next-btn:disabled, .assign-btn:disabled {
+  background-color: #e9ecef;
   cursor: not-allowed;
 }
 
@@ -407,85 +507,40 @@
   to { opacity: 1; }
 }
 
-/* Responsive adjustments */
+/* Responsive Design */
 @media (max-width: 768px) {
+  .teacher-assignment-container {
+    padding: 1rem;
+  }
+
+  .step-indicator {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+  }
+
+  .step-connector {
+    width: 2px;
+    height: 2rem;
+    margin: 0;
+  }
+
   .filters-grid {
     grid-template-columns: 1fr;
   }
-  
-  .assignment-header {
+
+  .step-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
   }
-  
-  .assignment-controls {
+
+  .prev-btn, .next-btn, .assign-btn {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    justify-content: center;
   }
-  
-  .assignment-controls select {
-    width: 100%;
+
+  .important-note {
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    font-size: 13px;
   }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-}
-
-.message {
-    padding: 12px 20px;
-    border-radius: 4px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-}
-
-.error-message {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-
-.info-message {
-    background-color: #e0f2fe;
-    color: #0369a1;
-    border: 1px solid #bae6fd;
-}
-
-.dismiss-button {
-    background: none;
-    border: none;
-    color: inherit;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 0 8px;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-
-.dismiss-button:hover {
-    opacity: 1;
-}
-
-.editing-row {
-  background-color: var(--primary-light);
-}
-
-.selected-row {
-  background-color: var(--primary-light);
-  cursor: pointer;
-}
-
-.selected-row:hover {
-  background-color: var(--primary-lighter);
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
 } 
