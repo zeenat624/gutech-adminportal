@@ -208,14 +208,14 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.section-name {
+.assignment-section-name {
   font-weight: 600;
   color: var(--primary-color);
   font-size: 16px;
   margin: 0;
 }
 
-.teacher-name {
+.assignment-teacher-name {
   color: var(--text-color);
   font-size: 14px;
   display: flex;
@@ -223,9 +223,14 @@
   gap: var(--spacing-xs);
 }
 
-.teacher-name::before {
-  content: "👤";
-  font-size: 16px;
+.assignment-teacher-name::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  margin-right: var(--spacing-xs);
 }
 
 .section-actions {

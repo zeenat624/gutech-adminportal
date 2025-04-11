@@ -357,7 +357,7 @@ const CourseRegistrationPage = () => {
                                             {section.teacher && (
                                                 <div className="teacher-info">
                                                     <span className="teacher-label">Teacher:</span>
-                                                    <span className="teacher-name">{section.teacher.name}</span>
+                                                    <span className="section-teacher-name">{section.teacher.name}</span>
                                                 </div>
                                             )}
                                         </div>

@@ -446,9 +446,13 @@
     color: var(--text-dark);
 }
 
-.teacher-name {
+.section-teacher-name {
     color: var(--primary-color);
+    font-size: 14px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
 }
 
 .loading-sections {

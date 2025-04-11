@@ -27,8 +27,8 @@ const SectionItem = ({ section, teachers, onAssign, loading }) => {
   return (
     <div className="section-item">
       <div className="section-details">
-        <span className="section-name">{section.section}</span>
-        <span className="teacher-name">
+        <span className="assignment-section-name">{section.section}</span>
+        <span className="assignment-teacher-name">
           {section.teacher?.name || 'Unassigned'}
         </span>
       </div>

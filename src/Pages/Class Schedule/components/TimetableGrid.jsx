@@ -17,6 +17,30 @@ const TimetableGrid = ({
     '13:00', '14:00', '15:00', '16:00', '17:00'
   ];
 
+  // Helper function to calculate duration in hours
+  const calculateDuration = (startTime, endTime) => {
+    const start = timeSlots.indexOf(startTime);
+    const end = timeSlots.indexOf(endTime);
+    return end - start;
+  };
+
+  // Helper function to check if a time slot is part of a longer schedule
+  const isPartOfLongerSchedule = (time, day, schedules) => {
+    return schedules.some(s => 
+      s.day === day && 
+      s.timeSlot.startTime < time && 
+      s.timeSlot.endTime > time
+    );
+  };
+
+  // Helper function to find all schedules for a time slot
+  const findSchedulesForTimeSlot = (time, day, schedules) => {
+    return schedules.filter(s => 
+      s.day === day && 
+      s.timeSlot.startTime === time
+    );
+  };
+
   return (
     <div className="timetable-grid">
       <div className="filters-summary">
@@ -64,58 +88,74 @@ const TimetableGrid = ({
               <tr key={time}>
                 <td>{`${time} - ${nextTime}`}</td>
                 {days.map(day => {
-                  // Find the schedule for this time slot and day
-                  const schedule = filteredSchedules.find(s => 
-                    s.day === day && 
-                    s.timeSlot?.startTime === time &&
-                    s.timeSlot?.endTime === nextTime
-                  );
+                  // Skip rendering if this time slot is part of a longer schedule
+                  if (isPartOfLongerSchedule(time, day, filteredSchedules)) {
+                    return <td key={day}></td>;
+                  }
 
-                  // Find the corresponding section data
-                  const sectionData = sections.find(s => s._id === schedule?.sectionId?._id);
+                  // Find all schedules for this time slot and day
+                  const schedules = findSchedulesForTimeSlot(time, day, filteredSchedules);
+
+                  if (schedules.length === 0) {
+                    return <td key={day}></td>;
+                  }
+
+                  // Calculate the maximum duration among all schedules in this cell
+                  const maxDuration = Math.max(...schedules.map(s => 
+                    calculateDuration(s.timeSlot.startTime, s.timeSlot.endTime)
+                  ));
 
                   return (
-                    <td key={day} className={schedule ? 'scheduled' : ''}>
-                      {schedule && (
-                        <div 
-                          className="schedule-cell"
-                          style={{ backgroundColor: getSectionColor(schedule) }}
-                        >
-                          <div className="schedule-info">
-                            <p className="course-name">
-                              {sectionData?.courseId?.name || schedule.courseId?.name || "Unknown Course"}
-                              <span className="section-name"> 
-                                (Section {sectionData?.section || schedule.sectionId?.section || '-'})
-                              </span>
-                            </p>
-                            <p className="teacher-name">
-                              Teacher: {sectionData?.teacherId?.userId?.name || 'No teacher assigned'}
-                            </p>
-                            <p className="course-details">
-                              {sectionData?.courseId?.department && `${sectionData.courseId.department}`}
-                              {sectionData?.courseId?.department && sectionData.courseId?.program && ' | '}
-                              {sectionData?.courseId?.program && `${sectionData.courseId.program}`}
-                              {(sectionData?.courseId?.department || sectionData.courseId?.program) && sectionData.courseId?.semester && ' | '}
-                              {sectionData?.courseId?.semester && `Semester ${sectionData.courseId.semester}`}
-                            </p>
-                            <p className="room-info">{schedule.timeSlot?.room || 'No Room'}</p>
-                          </div>
-                          <div className="schedule-actions">
-                            <button 
-                              className="edit-btn"
-                              onClick={() => handleEditSchedule(schedule)}
+                    <td 
+                      key={day} 
+                      className="scheduled"
+                      rowSpan={maxDuration}
+                    >
+                      <div className="schedule-container">
+                        {schedules.map(schedule => {
+                          // Find the corresponding section data
+                          const sectionData = sections.find(s => s._id === schedule?.sectionId?._id);
+
+                          return (
+                            <div 
+                              key={schedule._id}
+                              className="schedule-cell"
+                              style={{ backgroundColor: getSectionColor(schedule) }}
                             >
-                              Edit
-                            </button>
-                            <button 
-                              className="delete-btn"
-                              onClick={() => handleDeleteSchedule(schedule._id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                              <div className="schedule-info">
+                                <p className="course-name">
+                                  {sectionData?.courseId?.name || schedule.courseId?.name || "Unknown Course"}
+                                  <span className="timetable-section-name"> 
+                                    (Section {sectionData?.section || schedule.sectionId?.section || '-'})
+                                  </span>
+                                </p>
+                                <p className="timetable-teacher-name">
+                                  Teacher: {sectionData?.teacherId?.userId?.name || 'No teacher assigned'}
+                                </p>
+                                <p className="course-details">
+                                  {sectionData?.courseId?.department && `${sectionData.courseId.department}`}
+                                  {sectionData?.courseId?.department && sectionData.courseId?.program && ' | '}
+                                  {sectionData?.courseId?.program && `${sectionData.courseId.program}`}
+                                  {(sectionData?.courseId?.department || sectionData.courseId?.program) && sectionData.courseId?.semester && ' | '}
+                                  {sectionData?.courseId?.semester && `Semester ${sectionData.courseId.semester}`}
+                                </p>
+                                <p className="time-duration">
+                                  {schedule.timeSlot.startTime} - {schedule.timeSlot.endTime}
+                                  {calculateDuration(schedule.timeSlot.startTime, schedule.timeSlot.endTime) > 1 && 
+                                    ` (${calculateDuration(schedule.timeSlot.startTime, schedule.timeSlot.endTime)} hours)`}
+                                </p>
+                                <p className="room-info">
+                                  Room: {schedule.timeSlot.room}
+                                </p>
+                              </div>
+                              <div className="schedule-actions">
+                                <button onClick={() => handleEditSchedule(schedule)}>Edit</button>
+                                <button onClick={() => handleDeleteSchedule(schedule._id)}>Delete</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </td>
                   );
                 })}
