@@ -13,15 +13,15 @@ const CourseRegistrationPage = () => {
     const [selectedProgram, setSelectedProgram] = useState('');
     const [courses, setCourses] = useState([]);
     const [selectedCourse, setSelectedCourse] = useState(null);
-    const [teachers, setTeachers] = useState([]);
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [progress, setProgress] = useState(0);
-    const [sectionTeacherMap, setSectionTeacherMap] = useState({});
     const [extractedSections, setExtractedSections] = useState([]);
+    const [existingSections, setExistingSections] = useState([]);
+    const [loadingSections, setLoadingSections] = useState(false);
 
     useEffect(() => {
         if (selectedDepartment && selectedSemester && selectedProgram) {
@@ -30,12 +30,12 @@ const CourseRegistrationPage = () => {
     }, [selectedDepartment, selectedSemester, selectedProgram]);
 
     useEffect(() => {
-        if (selectedDepartment) {
-            fetchTeachers();
+        if (selectedCourse) {
+            fetchExistingSections();
         } else {
-            setTeachers([]);
+            setExistingSections([]);
         }
-    }, [selectedDepartment]);
+    }, [selectedCourse]);
 
     const fetchCourses = async () => {
         try {
@@ -53,25 +53,22 @@ const CourseRegistrationPage = () => {
         }
     };
 
-    const fetchTeachers = async () => {
+    const fetchExistingSections = async () => {
+        if (!selectedCourse) return;
+        
         try {
-            setLoading(true);
+            setLoadingSections(true);
             const token = sessionStorage.getItem('token');
             const response = await axios.get(
-                `${apiUrl}/api/teachers`,
+                `${apiUrl}/api/sections/course/${selectedCourse._id}`,
                 { headers: { 'x-auth-token': token } }
             );
-            console.log('Teachers data received:', response.data);
-            if (response.data && response.data.length > 0) {
-                console.log('First teacher object structure:', response.data[0]);
-                console.log('Available properties:', Object.keys(response.data[0]));
-            }
-            setTeachers(response.data);
+            setExistingSections(response.data);
         } catch (error) {
-            console.error('Error fetching teachers:', error);
-            setTeachers([]);
+            console.error('Error fetching sections:', error);
+            setExistingSections([]);
         } finally {
-            setLoading(false);
+            setLoadingSections(false);
         }
     };
 
@@ -91,93 +88,35 @@ const CourseRegistrationPage = () => {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet);
-                
-                // Validate required fields
-                const requiredFields = ['rollNumber', 'name', 'email', 'section'];
-                const validData = json.filter(row => 
-                    requiredFields.every(field => row[field] !== undefined && row[field] !== '')
-                );
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-                if (validData.length === 0) {
-                    setError('No valid data found in the Excel file. Please check the required fields.');
-                    return;
-                }
-
-                // Extract unique sections from the data
-                const sections = [...new Set(validData.map(row => row.section))];
+                // Extract unique sections
+                const sections = [...new Set(jsonData.map(row => row.section))];
                 setExtractedSections(sections);
 
-                // Initialize section-teacher mapping
-                const initialSectionTeacherMap = {};
-                sections.forEach(section => {
-                    initialSectionTeacherMap[section] = '';
-                });
-                setSectionTeacherMap(initialSectionTeacherMap);
-
-                setPreview(validData);
-                setError(null);
+                setPreview(jsonData);
             } catch (error) {
                 setError('Error reading Excel file: ' + error.message);
+                setPreview([]);
             }
         };
         reader.readAsArrayBuffer(file);
     };
 
-    const handleTeacherAssignment = (section, teacherId) => {
-        setSectionTeacherMap(prev => ({
-            ...prev,
-            [section]: teacherId
-        }));
-    };
+    const handleDownloadTemplate = () => {
+        const template = [
+            {
+                rollNumber: '2023001',
+                name: 'Ali Ahmad',
+                email: 'aliahmad@agu.edu.pk',
+                section: 'A'
+            }
+        ];
 
-    const handleDownloadTemplate = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        try {
-            // Create template data
-            const template = [
-                {
-                    rollNumber: '2024001',
-                    name: 'John Doe',
-                    email: 'john.doe@example.com',
-                    section: 'A'
-                }
-            ];
-
-            // Create worksheet
-            const ws = XLSX.utils.json_to_sheet(template);
-            
-            // Create workbook
-            const wb = XLSX.utils.book_new();
-            
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Students');
-            
-            // Generate file and trigger download using a different method
-            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url = URL.createObjectURL(blob);
-            
-            // Create a link element and trigger download
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'student_registration_template.xlsx';
-            document.body.appendChild(link);
-            link.click();
-            
-            // Clean up
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 100);
-            
-            console.log('Template download initiated');
-        } catch (error) {
-            console.error('Error generating template:', error);
-            setError('Failed to generate template file. Please try again.');
-        }
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Template');
+        XLSX.writeFile(wb, 'student_registration_template.xlsx');
     };
 
     const handleRegister = async (e) => {
@@ -189,13 +128,6 @@ const CourseRegistrationPage = () => {
             return;
         }
 
-        // Check if all sections have teachers assigned
-        const unassignedSections = extractedSections.filter(section => !sectionTeacherMap[section]);
-        if (unassignedSections.length > 0) {
-            setError(`Please assign teachers to all sections: ${unassignedSections.join(', ')}`);
-            return;
-        }
-
         try {
             setLoading(true);
             setError(null);
@@ -204,58 +136,6 @@ const CourseRegistrationPage = () => {
 
             const token = sessionStorage.getItem('token');
             console.log('Starting course registration process for course:', selectedCourse._id);
-            
-            // First, create or update sections with teacher assignments
-            console.log('Creating/updating sections:', extractedSections);
-            const sectionCreationPromises = extractedSections.map(async (section) => {
-                try {
-                    // Try to get existing section
-                    let existingSection = null;
-                    try {
-                        console.log(`Checking if section ${section} exists for course ${selectedCourse._id}`);
-                        const existingSectionResponse = await axios.get(
-                            `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${section}`,
-                            { headers: { 'x-auth-token': token } }
-                        );
-                        existingSection = existingSectionResponse.data;
-                        console.log(`Found existing section:`, existingSection);
-                    } catch (error) {
-                        // If 404, section doesn't exist, which is fine
-                        if (error.response && error.response.status !== 404) {
-                            console.error(`Error checking for section ${section}:`, error);
-                            throw error;
-                        }
-                    }
-                    
-                    if (existingSection) {
-                        // Update existing section with teacher
-                        console.log(`Updating section ${section} with teacher ${sectionTeacherMap[section]}`);
-                        return axios.put(
-                            `${apiUrl}/api/sections/${existingSection._id}`,
-                            {
-                                teacherId: sectionTeacherMap[section]
-                            },
-                            { headers: { 'x-auth-token': token } }
-                        );
-                    } else {
-                        // Create new section
-                        console.log(`Creating new section ${section} with teacher ${sectionTeacherMap[section]}`);
-                        return axios.post(
-                            `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${section}`,
-                            {
-                                teacherId: sectionTeacherMap[section]
-                            },
-                            { headers: { 'x-auth-token': token } }
-                        );
-                    }
-                } catch (error) {
-                    console.error(`Error creating/updating section ${section}:`, error);
-                    throw error;
-                }
-            });
-
-            console.log('Waiting for all sections to be created/updated');
-            await Promise.all(sectionCreationPromises);
             
             // Process students in batches
             const batchSize = 10;
@@ -276,7 +156,7 @@ const CourseRegistrationPage = () => {
                 // Register students in the current batch
                 await Promise.all(batch.map(async (student) => {
                     try {
-                        // Get the section ID for the student's section
+                        // Get or create section
                         let sectionResponse;
                         try {
                             console.log(`Getting section ${student.section} for student ${student.rollNumber}`);
@@ -285,24 +165,16 @@ const CourseRegistrationPage = () => {
                                 { headers: { 'x-auth-token': token } }
                             );
                         } catch (error) {
-                            // If section doesn't exist, create it
                             if (error.response && error.response.status === 404) {
                                 console.log(`Section ${student.section} not found, creating it`);
                                 const createSectionResponse = await axios.post(
                                     `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${student.section}`,
-                                    {
-                                        teacherId: sectionTeacherMap[student.section]
-                                    },
+                                    {},
                                     { headers: { 'x-auth-token': token } }
                                 );
                                 sectionResponse = { data: createSectionResponse.data };
                             } else {
-                                console.error(`Error getting section ${student.section}:`, error);
-                                failedRegistrations.push({
-                                    student: student.rollNumber,
-                                    error: 'Failed to get/create section'
-                                });
-                                return;
+                                throw error;
                             }
                         }
                         
@@ -364,7 +236,7 @@ const CourseRegistrationPage = () => {
             setPreview([]);
             setSelectedCourse(null);
             setExtractedSections([]);
-            setSectionTeacherMap({});
+            setExistingSections([]);
         } catch (error) {
             console.error('Registration error:', error);
             setError(error.response?.data?.message || 'Error registering students');
@@ -378,7 +250,7 @@ const CourseRegistrationPage = () => {
             <div className="page-header">
                 <h2>Course Registration</h2>
                 <p className="header-description">
-                    Browse and register for available courses. Use the filters below to find specific courses by semester, department, or teacher.
+                    Browse and register for available courses. Use the filters below to find specific courses by semester, department, or program.
                 </p>
             </div>
 
@@ -468,7 +340,39 @@ const CourseRegistrationPage = () => {
                 <div className="registration-section">
                     <h3>Register Students for {selectedCourse.name}</h3>
                     
+                    {/* Display existing sections */}
+                    <div className="existing-sections-section">
+                        <h4>Existing Sections</h4>
+                        {loadingSections ? (
+                            <div className="loading-sections">Loading sections...</div>
+                        ) : existingSections.length > 0 ? (
+                            <div className="sections-grid">
+                                {existingSections.map(section => (
+                                    <div key={section._id || section.id} className="section-card">
+                                        <div className="section-header">
+                                            <h5>Section {section.section}</h5>
+                                        </div>
+                                        <div className="section-details">
+                                            <p>Students: {section.enrolledStudentsCount || 0}</p>
+                                            {section.teacher && (
+                                                <div className="teacher-info">
+                                                    <span className="teacher-label">Teacher:</span>
+                                                    <span className="teacher-name">{section.teacher.name}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="no-sections-message">
+                                No sections exist for this course yet. Create sections by uploading student data.
+                            </div>
+                        )}
+                    </div>
+                    
                     <div className="file-upload-section">
+                        <h4>Upload Student Data</h4>
                         <div className="file-upload">
                             <div className="file-input-container">
                                 <input
@@ -496,35 +400,6 @@ const CourseRegistrationPage = () => {
                             Sections will be created automatically based on the data in the Excel file.
                         </p>
                     </div>
-
-                    {extractedSections.length > 0 && (
-                        <div className="sections-info">
-                            <h4>Assign Teachers to Sections</h4>
-                            <div className="sections-list">
-                                {extractedSections.map(section => (
-                                    <div key={section} className="section-item">
-                                        <span>Section {section}</span>
-                                        <select 
-                                            value={sectionTeacherMap[section] || ''} 
-                                            onChange={(e) => handleTeacherAssignment(section, e.target.value)}
-                                            className="teacher-select"
-                                        >
-                                            <option value="">Select Teacher</option>
-                                            {Array.isArray(teachers) && teachers.length > 0 ? (
-                                                teachers.map(teacher => (
-                                                    <option key={teacher._id} value={teacher._id}>
-                                                        {teacher.userId && teacher.userId.name ? teacher.userId.name : 'Unknown Teacher'}
-                                                    </option>
-                                                ))
-                                            ) : (
-                                                <option value="" disabled>No teachers available</option>
-                                            )}
-                                        </select>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
                     {loading && (
                         <div className="progress-bar">
@@ -566,7 +441,7 @@ const CourseRegistrationPage = () => {
 
                     <button 
                         onClick={handleRegister}
-                        disabled={!file || loading || preview.length === 0 || extractedSections.length === 0}
+                        disabled={!file || loading || preview.length === 0}
                         className="register-button"
                         type="button"
                     >
