@@ -22,12 +22,16 @@ const CourseRegistrationPage = () => {
     const [extractedSections, setExtractedSections] = useState([]);
     const [existingSections, setExistingSections] = useState([]);
     const [loadingSections, setLoadingSections] = useState(false);
+    const [teachers, setTeachers] = useState([]);
+    const [selectedTeacher, setSelectedTeacher] = useState('');
+    const [newSection, setNewSection] = useState({ section: '', teacherId: '' });
 
     useEffect(() => {
-        if (selectedDepartment && selectedSemester && selectedProgram) {
+        if (selectedDepartment && selectedProgram && selectedSemester) {
             fetchCourses();
+            fetchTeachers();
         }
-    }, [selectedDepartment, selectedSemester, selectedProgram]);
+    }, [selectedDepartment, selectedProgram, selectedSemester]);
 
     useEffect(() => {
         if (selectedCourse) {
@@ -69,6 +73,21 @@ const CourseRegistrationPage = () => {
             setExistingSections([]);
         } finally {
             setLoadingSections(false);
+        }
+    };
+
+    const fetchTeachers = async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await axios.get(`${apiUrl}/api/teachers`, {
+                headers: { 'x-auth-token': token }
+            });
+            const filteredTeachers = response.data.filter(teacher => 
+                teacher.department === selectedDepartment
+            );
+            setTeachers(filteredTeachers);
+        } catch (err) {
+            setError('Failed to fetch teachers: ' + err.message);
         }
     };
 
@@ -245,6 +264,32 @@ const CourseRegistrationPage = () => {
         }
     };
 
+    const handleCreateSection = async () => {
+        if (!selectedCourse || !newSection.section || !newSection.teacherId) {
+            setError('Please select a course, enter section name, and select a teacher');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const token = sessionStorage.getItem('token');
+            
+            const response = await axios.post(`${apiUrl}/api/sections/course/${selectedCourse._id}/section/${newSection.section}`, {
+                teacherId: newSection.teacherId
+            }, {
+                headers: { 'x-auth-token': token }
+            });
+
+            setSuccess('Section created successfully');
+            setNewSection({ section: '', teacherId: '' });
+            fetchExistingSections();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to create section');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="course-registration-container">
             <div className="page-header">
@@ -366,7 +411,37 @@ const CourseRegistrationPage = () => {
                             </div>
                         ) : (
                             <div className="no-sections-message">
-                                No sections exist for this course yet. Create sections by uploading student data.
+                                <p>No sections exist for this course yet. Create a section to proceed.</p>
+                                <div className="create-section-form">
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            placeholder="Section Name (e.g., A, B, C)"
+                                            value={newSection.section}
+                                            onChange={(e) => setNewSection({ ...newSection, section: e.target.value })}
+                                            className="section-input"
+                                        />
+                                        <select
+                                            value={newSection.teacherId}
+                                            onChange={(e) => setNewSection({ ...newSection, teacherId: e.target.value })}
+                                            className="teacher-select"
+                                        >
+                                            <option value="">Select Teacher</option>
+                                            {teachers.map((teacher) => (
+                                                <option key={teacher._id} value={teacher._id}>
+                                                    {teacher.userId?.name || 'Unknown Teacher'} ({teacher.employeeId})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={handleCreateSection}
+                                            disabled={!newSection.section || !newSection.teacherId || loading}
+                                            className="create-section-btn"
+                                        >
+                                            {loading ? 'Creating...' : 'Create Section'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

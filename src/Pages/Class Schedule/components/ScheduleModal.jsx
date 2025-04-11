@@ -12,7 +12,8 @@ const ScheduleModal = ({
   handleUpdateSchedule,
   selectedSection,
   formatTeacherName,
-  rooms
+  rooms,
+  teachers
 }) => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const timeSlots = [
@@ -86,14 +87,23 @@ const ScheduleModal = ({
           </select>
         </div>
 
-        {selectedSection && (
-          <div className="form-group">
-            <label>Teacher:</label>
-            <p className="selected-teacher">
-              {formatTeacherName(selectedSection.teacherId)}
-            </p>
-          </div>
-        )}
+        <div className="form-group">
+          <label>Teacher:</label>
+          <select
+            value={newSchedule.teacherId || ''}
+            onChange={(e) => setNewSchedule({
+              ...newSchedule,
+              teacherId: e.target.value
+            })}
+          >
+            <option value="">Select teacher...</option>
+            {teachers.map(teacher => (
+              <option key={teacher._id} value={teacher._id}>
+                {formatTeacherName(teacher)}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="modal-actions">
           <button onClick={() => {
@@ -109,6 +119,7 @@ const ScheduleModal = ({
               !newSchedule.timeSlot.startTime ||
               !newSchedule.timeSlot.endTime ||
               !newSchedule.timeSlot.room ||
+              !newSchedule.teacherId ||
               !selectedSection
             }
           >

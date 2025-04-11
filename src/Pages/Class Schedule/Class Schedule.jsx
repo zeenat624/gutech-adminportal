@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast, Toaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import LoadingSpinner from '../../Components/LoadingSpinner';
 import FiltersPanel from './components/FiltersPanel';
 import TimetableGrid from './components/TimetableGrid';
 import ScheduleModal from './components/ScheduleModal';
+import { showToast, showConflictToasts, TOAST_TYPES } from '../../Components/Toast/Toast';
 import './Class Schedule.css';
 
 function ClassSchedule() {
@@ -105,7 +106,7 @@ function ClassSchedule() {
       setSections(response.data);
     } catch (error) {
       console.error('Error fetching sections:', error);
-      toast.error('Failed to fetch sections');
+      showToast('Failed to fetch sections', TOAST_TYPES.ERROR);
     }
   };
 
@@ -116,7 +117,7 @@ function ClassSchedule() {
       });
       setTeachers(response.data);
     } catch (error) {
-      toast.error('Failed to fetch teachers');
+      showToast('Failed to fetch teachers', TOAST_TYPES.ERROR);
       console.error(error);
     }
   };
@@ -204,7 +205,7 @@ function ClassSchedule() {
       });
       setSectionColors(newSectionColors);
     } catch (error) {
-      toast.error('Failed to fetch schedules');
+      showToast('Failed to fetch schedules', TOAST_TYPES.ERROR);
       console.error(error);
     } finally {
       setLoading(false);
@@ -259,30 +260,10 @@ function ClassSchedule() {
         }
       );
       
-      // The API returns an array with a single object
-      const conflictData = response.data[0];
-      
-      // Check if the response has conflicts
-      if (conflictData && conflictData.hasConflicts) {
-        // Extract all conflict messages from the conflicts array
-        const conflictMessages = conflictData.conflicts.map(conflict => conflict.message);
-        
-        // Show each conflict message separately for better visibility
-        conflictMessages.forEach(message => {
-          toast.error(message, {
-            duration: 5000, // Show for 5 seconds
-            position: 'top-right',
-            style: {
-              background: '#ff6b6b',
-              color: 'white',
-              fontWeight: 'bold',
-              padding: '16px',
-              borderRadius: '8px',
-              maxWidth: '500px'
-            }
-          });
-        });
-        
+      // Check if there are conflicts in the response
+      if (response.data.conflicts && response.data.conflicts.length > 0) {
+        // Use the new showConflictToasts function to display conflicts
+        showConflictToasts(response.data.conflicts);
         return true;
       }
       
@@ -290,7 +271,7 @@ function ClassSchedule() {
     } catch (error) {
       console.error('Conflict check error:', error);
       const errorMessage = error.response?.data?.message || 'Error checking conflicts';
-      toast.error(errorMessage);
+      showToast(errorMessage, TOAST_TYPES.ERROR);
       return true;
     } finally {
       setLoading(false); // Hide loader after API call completes
@@ -300,20 +281,20 @@ function ClassSchedule() {
   const handleAddSchedule = async () => {
     try {
       if (!selectedSection) {
-        toast.error('Please select a section first');
+        showToast('Please select a section first', TOAST_TYPES.ERROR);
         return;
       }
 
       // Validate that end time is after start time
       if (newSchedule.timeSlot.startTime >= newSchedule.timeSlot.endTime) {
-        toast.error('End time must be after start time');
+        showToast('End time must be after start time', TOAST_TYPES.ERROR);
         return;
       }
 
-      // Use the teacherId from the selected section with null check
-      const teacherId = selectedSection.teacherId?._id;
+      // Use the teacherId from the schedule data
+      const teacherId = newSchedule.teacherId;
       if (!teacherId) {
-        toast.error('No teacher assigned to this section');
+        showToast('No teacher assigned to this schedule', TOAST_TYPES.ERROR);
         return;
       }
       
@@ -338,7 +319,7 @@ function ClassSchedule() {
           headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
         });
 
-        toast.success('Schedule added successfully');
+        showToast('Schedule added successfully', TOAST_TYPES.SUCCESS);
         fetchSchedules(selectedSection._id);
         setShowAddModal(false);
         setNewSchedule({
@@ -351,47 +332,15 @@ function ClassSchedule() {
           teacherId: ''
         });
       } catch (error) {
-        console.error('API Error:', error);
-        
-        // Handle conflict errors from the API
-        if (error.response && error.response.status === 400) {
-          // Check if the error response has conflicts
-          if (error.response.data.conflicts && Array.isArray(error.response.data.conflicts)) {
-            // Extract all conflict messages
-            const conflictMessages = error.response.data.conflicts.map(conflict => conflict.message);
-            
-            // Show each conflict message separately for better visibility
-            conflictMessages.forEach(message => {
-              toast.error(message, {
-                duration: 5000, // Show for 5 seconds
-                position: 'top-right',
-                style: {
-                  background: '#ff6b6b',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  maxWidth: '500px'
-                }
-              });
-            });
-          } else if (error.response.data.message) {
-            toast.error(error.response.data.message);
-          } else {
-            toast.error('Failed to add schedule: Conflict detected');
-          }
-        } else if (error.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error('Failed to add schedule: ' + (error.message || 'Unknown error'));
-        }
+        const errorMessage = error.response?.data?.message || 'Failed to add schedule';
+        showToast(errorMessage, TOAST_TYPES.ERROR);
+        console.error('Add schedule error:', error);
       } finally {
-        setLoading(false); // Hide loader after API call completes
+        setLoading(false);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
-      toast.error('An unexpected error occurred: ' + (error.message || 'Unknown error'));
-      setLoading(false); // Ensure loader is hidden even on unexpected errors
+      console.error('Error in handleAddSchedule:', error);
+      showToast('An error occurred while adding the schedule', TOAST_TYPES.ERROR);
     }
   };
 
@@ -408,20 +357,20 @@ function ClassSchedule() {
   const handleUpdateSchedule = async () => {
     try {
       if (!selectedSchedule) {
-        toast.error('No schedule selected for update');
+        showToast('No schedule selected for update', TOAST_TYPES.ERROR);
         return;
       }
 
       // Validate that end time is after start time
       if (newSchedule.timeSlot.startTime >= newSchedule.timeSlot.endTime) {
-        toast.error('End time must be after start time');
+        showToast('End time must be after start time', TOAST_TYPES.ERROR);
         return;
       }
 
-      // Use the teacherId from the selected section with null check
-      const teacherId = selectedSection.teacherId?._id;
+      // Use the teacherId from the schedule data
+      const teacherId = newSchedule.teacherId;
       if (!teacherId) {
-        toast.error('No teacher assigned to this section');
+        showToast('No teacher assigned to this schedule', TOAST_TYPES.ERROR);
         return;
       }
 
@@ -446,7 +395,7 @@ function ClassSchedule() {
           headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
         });
 
-        toast.success('Schedule updated successfully');
+        showToast('Schedule updated successfully', TOAST_TYPES.SUCCESS);
         fetchSchedules(selectedSection._id);
         setShowAddModal(false);
         setSelectedSchedule(null);
@@ -460,47 +409,15 @@ function ClassSchedule() {
           teacherId: ''
         });
       } catch (error) {
-        console.error('API Error:', error);
-        
-        // Handle conflict errors from the API
-        if (error.response && error.response.status === 400) {
-          // Check if the error response has conflicts
-          if (error.response.data.conflicts && Array.isArray(error.response.data.conflicts)) {
-            // Extract all conflict messages
-            const conflictMessages = error.response.data.conflicts.map(conflict => conflict.message);
-            
-            // Show each conflict message separately for better visibility
-            conflictMessages.forEach(message => {
-              toast.error(message, {
-                duration: 5000, // Show for 5 seconds
-                position: 'top-right',
-                style: {
-                  background: '#ff6b6b',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  maxWidth: '500px'
-                }
-              });
-            });
-          } else if (error.response.data.message) {
-            toast.error(error.response.data.message);
-          } else {
-            toast.error('Failed to update schedule: Conflict detected');
-          }
-        } else if (error.response?.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error('Failed to update schedule: ' + (error.message || 'Unknown error'));
-        }
+        const errorMessage = error.response?.data?.message || 'Failed to update schedule';
+        showToast(errorMessage, TOAST_TYPES.ERROR);
+        console.error('Update schedule error:', error);
       } finally {
-        setLoading(false); // Hide loader after API call completes
+        setLoading(false);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
-      toast.error('An unexpected error occurred: ' + (error.message || 'Unknown error'));
-      setLoading(false); // Ensure loader is hidden even on unexpected errors
+      console.error('Error in handleUpdateSchedule:', error);
+      showToast('An error occurred while updating the schedule', TOAST_TYPES.ERROR);
     }
   };
 
@@ -515,7 +432,7 @@ function ClassSchedule() {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
       });
 
-      toast.success('Schedule deleted successfully');
+      showToast('Schedule deleted successfully', TOAST_TYPES.SUCCESS);
       
       // Refresh schedule list - either section specific or all schedules
       if (selectedSection) {
@@ -525,7 +442,7 @@ function ClassSchedule() {
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to delete schedule';
-      toast.error(errorMessage);
+      showToast(errorMessage, TOAST_TYPES.ERROR);
       console.error('Delete schedule error:', error);
     } finally {
       setLoading(false); // Hide loader after API call completes
@@ -687,7 +604,7 @@ function ClassSchedule() {
       });
       setSectionColors(newSectionColors);
     } catch (error) {
-      toast.error('Failed to fetch all schedules');
+      showToast('Failed to fetch all schedules', TOAST_TYPES.ERROR);
       console.error(error);
     } finally {
       setLoading(false);
@@ -847,6 +764,7 @@ function ClassSchedule() {
         selectedSection={selectedSection}
         formatTeacherName={formatTeacherName}
         rooms={rooms}
+        teachers={teachers}
       />
     </div>
   );
