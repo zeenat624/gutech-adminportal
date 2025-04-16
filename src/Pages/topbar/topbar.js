@@ -47,7 +47,7 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
           {/* User profile */}
           <div className="user-profile">
             <div className="user-avatar" onClick={toggleProfileMenu}>
-              <span>JD</span>
+              <span>GU</span>
             </div>
             
             {/* Profile dropdown menu */}
