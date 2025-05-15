@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./styles/global.css"; // Single global CSS file
 import Signup from "./Pages/LoginSignUp/Signup";
+import ForgotPassword from "./Pages/ForgotPassword/ForgotPassword";
 import MainLayout from "./Pages/MainLayout/MainLayout";
 import ClassSchedule from "./Pages/Class Schedule/Class Schedule.jsx";
 import ImportStudentsPage from "./Pages/ImportStudents/ImportStudentsPage";
@@ -20,6 +21,7 @@ function App() {
         <div className="App">
           <Routes>
             <Route path="/" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             <Route element={<PrivateRoute />}>
               <Route path="/*" element={<MainLayout />}>

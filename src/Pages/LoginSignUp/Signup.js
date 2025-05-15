@@ -248,12 +248,12 @@ const Signup = () => {
             
             <div className="password-field">
               <input 
-                type={showPassword ? 'text' : 'password'} 
+                type={showPassword ? 'text' : 'password'}
                 name="password"
-                placeholder="Password" 
+                placeholder="Password"
                 value={loginForm.password}
                 onChange={handleLoginChange}
-                disabled={isSubmitting} 
+                disabled={isSubmitting}
               />
               <div
                 className="password-toggle"
@@ -265,8 +265,9 @@ const Signup = () => {
             </div>
             
             <Link to="/forgot-password" className="forgot-password">Forgot Your Password?</Link>
+            
             <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Processing...' : 'Sign In'}
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
         </div>
