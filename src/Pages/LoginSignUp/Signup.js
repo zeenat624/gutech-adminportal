@@ -3,12 +3,14 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import './Signup.css';
 import { departments } from '../../config/academicConfig';
+import { useAuth } from '../../Components/AuthContext';
 
 const Signup = () => {
   const [isSignupActive, setIsSignupActive] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   // Signup form state
   const [signupForm, setSignupForm] = useState({
@@ -135,9 +137,8 @@ const Signup = () => {
         return;
       }
       
-      // Save user data securely
-      sessionStorage.setItem('token', response.data.token);
-      sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      // Use the login function from AuthContext
+      login(response.data.user, response.data.token);
       
       // Navigate to dashboard
       navigate("/dashboard");

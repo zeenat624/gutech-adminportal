@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../Components/AuthContext';
 import './topbar.css';
 
 const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
   
   const user = JSON.parse(sessionStorage.getItem('user'));
 
@@ -13,8 +15,7 @@ const Topbar = ({ toggleSidebar, isSidebarOpen }) => {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    logout(); // This will handle removing adminToken and adminUser from sessionStorage
     navigate('/'); // Redirect to login page
   };
 

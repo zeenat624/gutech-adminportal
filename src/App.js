@@ -10,25 +10,31 @@ import CoursePage from "./Pages/Course/CoursePage.js";
 import AssignSectionPage from "./Pages/AssignSection/AssignSectionPage.js";
 import CourseRegistrationPage from "./Pages/CourseRegistration/CourseRegistrationPage";
 import StudentMarksPage from "./Pages/StudentMarks/StudentMarksPage";
+import { AuthProvider } from "./Components/AuthContext";
+import PrivateRoute from "./Components/PrivateRoute";
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Signup />} />
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Signup />} />
 
-          <Route path="/*" element={<MainLayout />}>
-            <Route path="class-schedule" element={<ClassSchedule />} />
-            <Route path="Course" element={<CoursePage />} />
-            <Route path="course-registration" element={<CourseRegistrationPage />} />
-            <Route path="import-students" element={<ImportStudentsPage />} />
-            <Route path="student-directory" element={<StudentDirectoryPage />} />
-            <Route path="marks" element={<StudentMarksPage />} />
-          </Route>
-        </Routes>
-      </div>
-    </Router>
+            <Route element={<PrivateRoute />}>
+              <Route path="/*" element={<MainLayout />}>
+                <Route path="class-schedule" element={<ClassSchedule />} />
+                <Route path="Course" element={<CoursePage />} />
+                <Route path="course-registration" element={<CourseRegistrationPage />} />
+                <Route path="import-students" element={<ImportStudentsPage />} />
+                <Route path="student-directory" element={<StudentDirectoryPage />} />
+                <Route path="marks" element={<StudentMarksPage />} />
+              </Route>
+            </Route>
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
