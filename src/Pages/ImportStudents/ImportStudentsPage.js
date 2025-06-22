@@ -19,10 +19,10 @@ const ImportStudentsPage = () => {
 
     useEffect(() => {
         // Check if user is authenticated
-        const token = sessionStorage.getItem('token');
+        const token = sessionStorage.getItem('adminToken');
         if (!token) {
             toast.error('Please login to access this page');
-            navigate('/login');
+            navigate('/');
             return;
         }
     }, [navigate]);
@@ -91,10 +91,10 @@ const ImportStudentsPage = () => {
             return;
         }
 
-        const token = sessionStorage.getItem('token');
+        const token = sessionStorage.getItem('adminToken');
         if (!token) {
             setError('Authentication required. Please login again.');
-            navigate('/login');
+            navigate('/');
             return;
         }
 
@@ -160,7 +160,7 @@ const ImportStudentsPage = () => {
                 } catch (err) {
                     if (err.response?.status === 401) {
                         setError('Session expired. Please login again.');
-                        navigate('/login');
+                        navigate('/');
                     } else {
                         setError(err.response?.data?.message || 'Error processing the file');
                     }

@@ -44,7 +44,7 @@ const CourseRegistrationPage = () => {
     const fetchCourses = async () => {
         try {
             setLoading(true);
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('adminToken');
             const response = await axios.get(
                 `${apiUrl}/api/courses/department/${selectedDepartment}/program/${selectedProgram}/semester/${selectedSemester}`,
                 { headers: { 'x-auth-token': token } }
@@ -62,7 +62,7 @@ const CourseRegistrationPage = () => {
         
         try {
             setLoadingSections(true);
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('adminToken');
             const response = await axios.get(
                 `${apiUrl}/api/sections/course/${selectedCourse._id}`,
                 { headers: { 'x-auth-token': token } }
@@ -78,7 +78,7 @@ const CourseRegistrationPage = () => {
 
     const fetchTeachers = async () => {
         try {
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('adminToken');
             const response = await axios.get(`${apiUrl}/api/teachers`, {
                 headers: { 'x-auth-token': token }
             });
@@ -153,7 +153,7 @@ const CourseRegistrationPage = () => {
             setSuccess(null);
             setProgress(0);
 
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('adminToken');
             console.log('Starting course registration process for course:', selectedCourse._id);
             
             // Process students in batches
@@ -272,7 +272,7 @@ const CourseRegistrationPage = () => {
 
         try {
             setLoading(true);
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('adminToken');
             
             const response = await axios.post(`${apiUrl}/api/sections/course/${selectedCourse._id}/section/${newSection.section}`, {
                 teacherId: newSection.teacherId

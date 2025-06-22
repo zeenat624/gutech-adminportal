@@ -27,7 +27,7 @@ const StudentMarksPage = () => {
 
   // Get auth token from session storage
   const getAuthToken = () => {
-    return sessionStorage.getItem('token');
+    return sessionStorage.getItem('adminToken');
   };
 
   // Fetch courses data when department, program, and semester are selected

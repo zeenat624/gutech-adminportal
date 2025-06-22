@@ -29,7 +29,7 @@ const StudentDirectoryPage = () => {
   const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       
       if (!token) {
         toast.error('Authentication required. Please login again.');

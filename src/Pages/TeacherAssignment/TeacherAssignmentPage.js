@@ -142,7 +142,7 @@ const TeacherAssignmentPage = () => {
       const encodedProgram = encodeURIComponent(selectedProgram);
       const encodedSemester = encodeURIComponent(selectedSemester);
       
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/api/courses/department/${encodedDepartment}/program/${encodedProgram}/semester/${encodedSemester}`, {
         headers: { 'x-auth-token': token }
       });
@@ -156,7 +156,7 @@ const TeacherAssignmentPage = () => {
 
   const fetchTeachers = async () => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/api/teachers`, {
         headers: { 'x-auth-token': token }
       });
@@ -174,7 +174,7 @@ const TeacherAssignmentPage = () => {
     
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/api/sections/course/${selectedCourse}`, {
         headers: { 'x-auth-token': token }
       });
@@ -207,7 +207,7 @@ const TeacherAssignmentPage = () => {
     setError(null);
     
     try {
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/api/course-registration/getStudents/${selectedSection}`, {
         headers: { 'x-auth-token': token }
       });
@@ -240,7 +240,7 @@ const TeacherAssignmentPage = () => {
 
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       
       // If section is provided, update existing section
       if (section) {
@@ -332,7 +332,7 @@ const TeacherAssignmentPage = () => {
     
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('adminToken');
       
       console.log('Adding new section:', {
         courseId: selectedCourse,

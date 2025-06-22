@@ -42,7 +42,7 @@ function ClassSchedule() {
   const fetchCourseDetails = async (courseId) => {
     try {
       const response = await axios.get(`${apiUrl}/api/courses/${courseId}`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
       });
       return response.data;
     } catch (error) {
@@ -82,11 +82,11 @@ function ClassSchedule() {
   const fetchSections = async () => {
     try {
       console.log('Fetching sections...');
-      console.log('Token:', sessionStorage.getItem('token'));
+      console.log('Token:', sessionStorage.getItem('adminToken'));
       
       // Use the deep populate query parameter to include the userId field
       const response = await axios.get(`${apiUrl}/api/sections`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` },
         params: { 
           populate: 'true',
           deep: 'true'  // This parameter should trigger deep population in the backend
@@ -113,7 +113,7 @@ function ClassSchedule() {
   const fetchTeachers = async () => {
     try {
       const response = await axios.get(`${apiUrl}/api/teachers`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
       });
       setTeachers(response.data);
     } catch (error) {
@@ -126,7 +126,7 @@ function ClassSchedule() {
     try {
       setLoading(true);
       const response = await axios.get(`${apiUrl}/api/section-schedules/section/${sectionId}`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
       });
       
       console.log('Raw schedule data:', response.data);
@@ -256,7 +256,7 @@ function ClassSchedule() {
         `${apiUrl}/api/section-schedules/check-conflicts`,
         scheduleData,
         {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
         }
       );
       
@@ -316,7 +316,7 @@ function ClassSchedule() {
       try {
         setLoading(true); // Show loader during API call
         const response = await axios.post(`${apiUrl}/api/section-schedules`, scheduleData, {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
         });
 
         showToast('Schedule added successfully', TOAST_TYPES.SUCCESS);
@@ -392,7 +392,7 @@ function ClassSchedule() {
       try {
         setLoading(true); // Show loader during API call
         const response = await axios.put(`${apiUrl}/api/section-schedules/${selectedSchedule._id}`, scheduleData, {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
         });
 
         showToast('Schedule updated successfully', TOAST_TYPES.SUCCESS);
@@ -429,7 +429,7 @@ function ClassSchedule() {
     try {
       setLoading(true); // Show loader during API call
       await axios.delete(`${apiUrl}/api/section-schedules/${scheduleId}`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
       });
 
       showToast('Schedule deleted successfully', TOAST_TYPES.SUCCESS);
@@ -497,7 +497,7 @@ function ClassSchedule() {
       
       // First, fetch all sections
       const sectionsResponse = await axios.get(`${apiUrl}/api/sections`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` },
         params: { 
           populate: 'true',
           deep: 'true'
@@ -509,7 +509,7 @@ function ClassSchedule() {
       for (const section of sectionsResponse.data) {
         fetchPromises.push(
           axios.get(`${apiUrl}/api/section-schedules/section/${section._id}`, {
-            headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+            headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
           }).catch(error => {
             // If there's an error fetching schedules for this section, return an empty array
             console.warn(`Error fetching schedules for section ${section._id}:`, error);
