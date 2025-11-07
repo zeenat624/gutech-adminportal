@@ -1,27 +1,12 @@
 /**
  * Academic Configuration
  * 
- * This file contains centralized configuration for academic-related data
- * such as departments, programs, and semesters.
+ * This file contains centralized configuration for academic-related data.
+ * Note: Departments and Programs are now fetched from the API using the useDepartmentsAndPrograms hook.
+ * Only static configuration like semesters remains here.
  */
 
-// List of departments
-export const departments = [
-    'Computer Science',
-    'Information Technology',
-    'Software Engineering',
-    'Cyber Security'
-];
-
-// List of programs
-export const programs = [
-    'BSc',
-    'MSc',
-    'Master of Engineering',
-    'PhD'
-];
-
-// List of semesters
+// List of semesters (can be overridden by program's typicalDuration)
 export const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
 // Academic year format

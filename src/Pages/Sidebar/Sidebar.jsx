@@ -15,7 +15,10 @@ const Sidebar = ({ isOpen, activePage, onNavClick }) => {
     { id: "course-registration", label: "Enroll Students", icon: "📝", path: "course-registration" },
     { id: "import-students", label: "Import Students", icon: "📥", path: "import-students" },
     { id: "student-directory", label: "Student Directory", icon: "👥", path: "student-directory" },
-    { id: "class-schedule", label: "Class Schedule", icon: "📅", path: "class-schedule" }
+    { id: "class-schedule", label: "Class Schedule", icon: "📅", path: "class-schedule" },
+    { id: "departments", label: "Departments", icon: "🏛️", path: "departments" },
+    { id: "programs", label: "Programs", icon: "🎓", path: "programs" },
+    { id: "academic-years", label: "Academic Years", icon: "📆", path: "academic-years" }
   ];
   
   return (

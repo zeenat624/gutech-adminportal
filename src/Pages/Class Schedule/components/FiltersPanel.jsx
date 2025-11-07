@@ -1,5 +1,6 @@
 import React from 'react';
-import { departments, programs, semesters } from '../../../config/academicConfig';
+import { useDepartmentsAndPrograms } from '../../../hooks/useDepartmentsAndPrograms';
+import { semesters } from '../../../config/academicConfig';
 import './FiltersPanel.css';
 
 const FiltersPanel = ({
@@ -16,6 +17,7 @@ const FiltersPanel = ({
   setSelectedSchedule,
   sectionColors
 }) => {
+  const { departments, programs, loading: deptProgLoading } = useDepartmentsAndPrograms();
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
   return (
@@ -28,10 +30,11 @@ const FiltersPanel = ({
           <select 
             value={filters.department} 
             onChange={(e) => handleFilterChange('department', e.target.value)}
+            disabled={deptProgLoading}
           >
             <option value="">All Departments</option>
             {departments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
+              <option key={dept._id} value={dept._id}>{dept.name}</option>
             ))}
           </select>
         </div>
@@ -41,23 +44,11 @@ const FiltersPanel = ({
           <select 
             value={filters.program} 
             onChange={(e) => handleFilterChange('program', e.target.value)}
+            disabled={deptProgLoading}
           >
             <option value="">All Programs</option>
             {programs.map(prog => (
-              <option key={prog} value={prog}>{prog}</option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="filter-group">
-          <label>Semester:</label>
-          <select 
-            value={filters.semester} 
-            onChange={(e) => handleFilterChange('semester', e.target.value)}
-          >
-            <option value="">All Semesters</option>
-            {semesters.map(sem => (
-              <option key={sem} value={sem}>Semester {sem}</option>
+              <option key={prog._id} value={prog._id}>{prog.name}</option>
             ))}
           </select>
         </div>

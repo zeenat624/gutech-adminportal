@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./CoursePage.css";
 import { toast } from "react-hot-toast";
-import { departments, programs, getCurrentAcademicYear } from '../../config/academicConfig';
+import { useDepartmentsAndPrograms } from '../../hooks/useDepartmentsAndPrograms';
+import { getCurrentAcademicYear } from '../../config/academicConfig';
 import TeacherAssignmentPage from '../TeacherAssignment/TeacherAssignmentPage';
 import { FiSearch, FiFilter, FiDownload, FiInfo, FiX, FiEdit2, FiTrash2, FiPlus, FiToggleLeft, FiToggleRight } from "react-icons/fi";
 import LoadingSpinner from '../../Components/LoadingSpinner';
@@ -10,13 +11,13 @@ import NoResultsFound from '../../Components/NoResultsFound';
 
 const CoursePage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+  const { departments, programs, loading: deptProgLoading, getProgramById } = useDepartmentsAndPrograms();
   
   const [course, setCourse] = useState({
     code: "",
     name: "",
     description: "",
     creditHours: "",
-    semester: "1",
     isActive: true
   });
 
@@ -25,12 +26,12 @@ const CoursePage = () => {
     department: "",
     program: "",
     semester: "1",
-    semesterType: "Fall",
-    year: new Date().getFullYear()
+    academicYearId: ""
   });
 
   const [courses, setCourses] = useState([]);
   const [courseOfferings, setCourseOfferings] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('create'); // 'create', 'offerings', 'assignments', 'manage'
@@ -46,7 +47,6 @@ const CoursePage = () => {
   
   // New state for manage courses tab
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterSemester, setFilterSemester] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [editingCourse, setEditingCourse] = useState(null);
   const [filteredCourses, setFilteredCourses] = useState([]);
@@ -54,7 +54,33 @@ const CoursePage = () => {
   useEffect(() => {
     fetchCourses();
     fetchCourseOfferings();
+    fetchAcademicYears();
   }, []);
+
+  const fetchAcademicYears = async () => {
+    try {
+      const token = sessionStorage.getItem('adminToken');
+      const response = await axios.get(`${apiUrl}/api/academic-years`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Filter to only show active academic years and sort by year (descending) and semester type
+      const activeYears = response.data
+        .filter(ay => ay.isActive)
+        .sort((a, b) => {
+          // Sort by year descending first
+          if (b.year !== a.year) {
+            return b.year - a.year;
+          }
+          // Then by semester type: Fall, Spring, Summer
+          const order = { Fall: 1, Spring: 2, Summer: 3 };
+          return (order[a.semesterType] || 0) - (order[b.semesterType] || 0);
+        });
+      setAcademicYears(activeYears);
+    } catch (error) {
+      console.error('Error fetching academic years:', error);
+      toast.error('Failed to fetch academic years');
+    }
+  };
 
   // Filter courses when search term, semester filter, or status filter changes
   useEffect(() => {
@@ -71,12 +97,7 @@ const CoursePage = () => {
         );
       }
       
-      // Apply semester filter
-      if (filterSemester) {
-        filtered = filtered.filter(course => 
-          course.semester.toString() === filterSemester
-        );
-      }
+      // Semester filter removed - semester is now in CourseOffering, not Course
       
       // Apply status filter
       if (filterStatus !== "") {
@@ -88,7 +109,7 @@ const CoursePage = () => {
       
       setFilteredCourses(filtered);
     }
-  }, [searchTerm, filterSemester, filterStatus, courses, activeTab]);
+  }, [searchTerm, filterStatus, courses, activeTab]);
 
   const fetchCourses = async () => {
     try {
@@ -101,7 +122,10 @@ const CoursePage = () => {
 
   const fetchCourseOfferings = async () => {
     try {
-      const response = await axios.get(`${apiUrl}/api/course-offerings`);
+      const token = sessionStorage.getItem('adminToken');
+      const response = await axios.get(`${apiUrl}/api/course-offerings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setCourseOfferings(response.data);
     } catch (error) {
       setMessage({ text: "Error fetching course offerings", type: "error" });
@@ -131,7 +155,6 @@ const CoursePage = () => {
       name: course.name,
       description: course.description,
       creditHours: course.creditHours,
-      semester: course.semester.toString(),
       isActive: course.isActive
     });
     setActiveTab('create');
@@ -214,7 +237,7 @@ const CoursePage = () => {
       setMessage({ text: "Course created successfully!", type: "success" });
       }
 
-      setCourse({ code: "", name: "", description: "", creditHours: "", semester: "1", isActive: true });
+      setCourse({ code: "", name: "", description: "", creditHours: "", isActive: true });
       setEditingCourse(null);
       fetchCourses(); // Refresh the courses list
     } catch (error) {
@@ -227,17 +250,24 @@ const CoursePage = () => {
   const handleOfferingSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${apiUrl}/api/course-offerings`, courseOffering);
+      const token = sessionStorage.getItem('adminToken');
+      const response = await axios.post(
+        `${apiUrl}/api/course-offerings`, 
+        courseOffering,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       setCourseOfferings([...courseOfferings, response.data]);
       setCourseOffering({
         courseId: "",
         department: "",
         program: "",
         semester: "1",
-        semesterType: "Fall",
-        year: new Date().getFullYear()
+        academicYearId: ""
       });
       toast.success('Course offering created successfully');
+      fetchCourseOfferings(); // Refresh to get populated data
     } catch (error) {
       console.error('Error creating course offering:', error);
       toast.error(error.response?.data?.message || 'Error creating course offering');
@@ -265,11 +295,17 @@ const CoursePage = () => {
       const keyParts = [];
       
       if (groupByOptions.department) {
-        keyParts.push(offering.department || 'Unassigned Department');
+        const deptName = typeof offering.department === 'object' 
+          ? offering.department.name 
+          : (offering.department || 'Unassigned Department');
+        keyParts.push(deptName);
       }
       
       if (groupByOptions.program) {
-        keyParts.push(offering.program || 'Unassigned Program');
+        const progName = typeof offering.program === 'object' 
+          ? offering.program.name 
+          : (offering.program || 'Unassigned Program');
+        keyParts.push(progName);
       }
       
       if (groupByOptions.semester) {
@@ -308,10 +344,16 @@ const CoursePage = () => {
             {offerings.map(offering => (
               <tr key={offering._id}>
                 <td>{offering.courseId?.code} - {offering.courseId?.name}</td>
-                <td>{offering.department}</td>
-                <td>{offering.program}</td>
+                <td>{typeof offering.department === 'object' ? offering.department.name : offering.department}</td>
+                <td>{typeof offering.program === 'object' ? offering.program.name : offering.program}</td>
                 <td>{offering.semester}</td>
-                <td>{offering.semesterType} {offering.year}</td>
+                <td>
+                  {offering.academicYearId && typeof offering.academicYearId === 'object'
+                    ? offering.academicYearId.displayName || `${offering.academicYearId.semesterType} ${offering.academicYearId.year}`
+                    : offering.semesterType && offering.year
+                    ? `${offering.semesterType} ${offering.year}`
+                    : 'N/A'}
+                </td>
                 <td>{offering.isActive ? 'Active' : 'Inactive'}</td>
               </tr>
             ))}
@@ -323,7 +365,6 @@ const CoursePage = () => {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setFilterSemester("");
     setFilterStatus("");
   };
 
@@ -415,16 +456,6 @@ const CoursePage = () => {
               required
             />
           </div>
-          <div>
-            <label>Semester:</label>
-            <select name="semester" value={course.semester} onChange={handleChange} required>
-              {Array.from({ length: 8 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  Semester {i + 1}
-                </option>
-              ))}
-            </select>
-          </div>
               <div className="checkbox-field">
                 <label className="checkbox-label">
                   <input
@@ -443,7 +474,7 @@ const CoursePage = () => {
                     className="cancel-btn"
                     onClick={() => {
                       setEditingCourse(null);
-                      setCourse({ code: "", name: "", description: "", creditHours: "", semester: "1", isActive: true });
+                      setCourse({ code: "", name: "", description: "", creditHours: "", isActive: true });
                     }}
                   >
                     Cancel
@@ -478,22 +509,6 @@ const CoursePage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
                 />
-              </div>
-              
-              <div className="filter-container">
-                <label>Filter by Semester:</label>
-                <select 
-                  value={filterSemester} 
-                  onChange={(e) => setFilterSemester(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="">All Semesters</option>
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      Semester {i + 1}
-                    </option>
-                  ))}
-                </select>
               </div>
               
               <div className="filter-container">
@@ -537,7 +552,6 @@ const CoursePage = () => {
                       <th>Name</th>
                       <th>Description</th>
                       <th>Credit Hours</th>
-                      <th>Semester</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -549,7 +563,6 @@ const CoursePage = () => {
                         <td>{course.name}</td>
                         <td className="description-cell">{course.description}</td>
                         <td>{course.creditHours}</td>
-                        <td>Semester {course.semester}</td>
                         <td>
                           <span className={`status-badge ${course.isActive ? 'active' : 'inactive'}`}>
                             {course.isActive ? 'Active' : 'Inactive'}
@@ -621,10 +634,11 @@ const CoursePage = () => {
                 value={courseOffering.department}
                 onChange={handleOfferingChange}
                 required
+                disabled={deptProgLoading}
               >
                 <option value="">Select Department</option>
                 {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept._id} value={dept._id}>{dept.name}</option>
                 ))}
               </select>
             </div>
@@ -635,10 +649,11 @@ const CoursePage = () => {
                 value={courseOffering.program}
                 onChange={handleOfferingChange}
                 required
+                disabled={deptProgLoading}
               >
                 <option value="">Select Program</option>
                 {programs.map(prog => (
-                  <option key={prog} value={prog}>{prog}</option>
+                  <option key={prog._id} value={prog._id}>{prog.name}</option>
                 ))}
               </select>
             </div>
@@ -650,34 +665,35 @@ const CoursePage = () => {
                 onChange={handleOfferingChange}
                 required
               >
-                {[...Array(8)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>Semester {i + 1}</option>
-                ))}
+                {(() => {
+                  const program = getProgramById(courseOffering.program);
+                  const maxSemesters = program?.typicalDuration || 8;
+                  return [...Array(maxSemesters)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>Semester {i + 1}</option>
+                  ));
+                })()}
               </select>
             </div>
             <div>
-              <label>Semester Type:</label>
+              <label>Academic Year *</label>
               <select
-                name="semesterType"
-                value={courseOffering.semesterType}
+                name="academicYearId"
+                value={courseOffering.academicYearId}
                 onChange={handleOfferingChange}
                 required
               >
-                <option value="Fall">Fall</option>
-                <option value="Spring">Spring</option>
+                <option value="">Select Academic Year</option>
+                {academicYears.map(ay => (
+                  <option key={ay._id} value={ay._id}>
+                    {ay.displayName || `${ay.semesterType} ${ay.year}`} {ay.isCurrent ? '(Current)' : ''}
+                  </option>
+                ))}
               </select>
-            </div>
-            <div>
-              <label>Year:</label>
-              <input
-                type="number"
-                name="year"
-                value={courseOffering.year}
-                onChange={handleOfferingChange}
-                min={new Date().getFullYear() - 1}
-                max={new Date().getFullYear() + 1}
-                required
-              />
+              {academicYears.length === 0 && (
+                <small style={{ color: '#dc3545', display: 'block', marginTop: '4px' }}>
+                  No academic years available. Please create one in Academic Years page.
+                </small>
+              )}
             </div>
             <button className="submit-btn" type="submit">Create Course Offering</button>
           </form>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { departments, programs, semesters } from '../../config/academicConfig';
+import { useDepartmentsAndPrograms } from '../../hooks/useDepartmentsAndPrograms';
+import { semesters } from '../../config/academicConfig';
 import { FiInfo, FiX, FiCheck, FiSearch, FiFilter } from 'react-icons/fi';
 import './TeacherAssignmentPage.css';
 import NoResultsFound from '../../Components/NoResultsFound';
@@ -39,11 +40,15 @@ const SectionItem = ({ section, teachers, onAssign, loading }) => {
           className="teacher-select"
         >
           <option value="">Select Teacher</option>
-          {teachers.map((teacher) => (
+          {teachers.length > 0 ? (
+            teachers.map((teacher) => (
             <option key={teacher._id} value={teacher._id}>
-              {teacher.userId?.name || 'Unknown Teacher'} ({teacher.employeeId})
+                {teacher.userId?.name || teacher.userId?.email || 'Unknown Teacher'} ({teacher.employeeId || 'N/A'})
             </option>
-          ))}
+            ))
+          ) : (
+            <option value="" disabled>No teachers available</option>
+          )}
         </select>
         <button
           className="assign-btn"
@@ -58,6 +63,7 @@ const SectionItem = ({ section, teachers, onAssign, loading }) => {
 };
 
 const TeacherAssignmentPage = () => {
+  const { departments, programs, loading: deptProgLoading } = useDepartmentsAndPrograms();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -160,10 +166,9 @@ const TeacherAssignmentPage = () => {
       const response = await axios.get(`${apiUrl}/api/teachers`, {
         headers: { 'x-auth-token': token }
       });
-      const filteredTeachers = response.data.filter(teacher => 
-        teacher.department === selectedDepartment
-      );
-      setTeachers(filteredTeachers);
+      
+      // Show all teachers regardless of department
+      setTeachers(response.data || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch teachers. Please try again.');
     }
@@ -206,7 +211,7 @@ const TeacherAssignmentPage = () => {
     
     try {
       const token = sessionStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/api/course-registration/getStudents/${selectedSection}`, {
+      const response = await axios.get(`${apiUrl}/api/course-registrations/getStudents/${selectedSection}`, {
         headers: { 'x-auth-token': token }
       });
       setStudents(response.data);
@@ -389,10 +394,11 @@ const TeacherAssignmentPage = () => {
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
               className={selectedDepartment ? 'selected' : ''}
+              disabled={deptProgLoading}
             >
               <option value="">Select Department</option>
               {departments.map((dept) => (
-                <option key={dept} value={dept}>{dept}</option>
+                <option key={dept._id} value={dept._id}>{dept.name}</option>
               ))}
             </select>
           </div>
@@ -401,12 +407,12 @@ const TeacherAssignmentPage = () => {
             <select
               value={selectedProgram}
               onChange={(e) => setSelectedProgram(e.target.value)}
-              disabled={!selectedDepartment}
+              disabled={!selectedDepartment || deptProgLoading}
               className={selectedProgram ? 'selected' : ''}
             >
               <option value="">Select Program</option>
               {programs.map((prog) => (
-                <option key={prog} value={prog}>{prog}</option>
+                <option key={prog._id} value={prog._id}>{prog.name}</option>
               ))}
             </select>
           </div>
@@ -489,11 +495,15 @@ const TeacherAssignmentPage = () => {
                       className="teacher-select"
                     >
                       <option value="">Select Teacher</option>
-                      {teachers.map((teacher) => (
+                      {teachers.length > 0 ? (
+                        teachers.map((teacher) => (
                         <option key={teacher._id} value={teacher._id}>
-                          {teacher.userId?.name || 'Unknown Teacher'} ({teacher.employeeId})
+                            {teacher.userId?.name || teacher.userId?.email || 'Unknown Teacher'} ({teacher.employeeId || 'N/A'})
                         </option>
-                      ))}
+                        ))
+                      ) : (
+                        <option value="" disabled>No teachers available for this department</option>
+                      )}
                     </select>
                     <button
                       className="assign-btn"

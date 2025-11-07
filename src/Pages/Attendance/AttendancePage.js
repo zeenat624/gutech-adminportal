@@ -209,7 +209,7 @@ const AttendancePage = () => {
   // Fetch students for a specific section
   const fetchStudentsForSection = async (sectionId) => {
     try {
-      const sectionStudentsResponse = await axios.get(`${apiUrl}/api/course-registration/getStudents/${sectionId.toString()}`, {
+      const sectionStudentsResponse = await axios.get(`${apiUrl}/api/course-registrations/getStudents/${sectionId.toString()}`, {
         headers: {
           "x-auth-token": getAuthToken(),
         },

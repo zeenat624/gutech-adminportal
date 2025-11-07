@@ -12,6 +12,9 @@ import AssignSectionPage from "./Pages/AssignSection/AssignSectionPage.js";
 import CourseRegistrationPage from "./Pages/CourseRegistration/CourseRegistrationPage";
 import StudentMarksPage from "./Pages/StudentMarks/StudentMarksPage";
 import AttendancePage from "./Pages/Attendance/AttendancePage";
+import DepartmentsPage from "./Pages/Departments/DepartmentsPage";
+import ProgramsPage from "./Pages/Programs/ProgramsPage";
+import AcademicYearsPage from "./Pages/AcademicYears/AcademicYearsPage";
 import { AuthProvider } from "./Components/AuthContext";
 import PrivateRoute from "./Components/PrivateRoute";
 
@@ -33,6 +36,9 @@ function App() {
                 <Route path="student-directory" element={<StudentDirectoryPage />} />
                 <Route path="marks" element={<StudentMarksPage />} />
                 <Route path="attendance" element={<AttendancePage />} />
+                <Route path="departments" element={<DepartmentsPage />} />
+                <Route path="programs" element={<ProgramsPage />} />
+                <Route path="academic-years" element={<AcademicYearsPage />} />
               </Route>
             </Route>
           </Routes>

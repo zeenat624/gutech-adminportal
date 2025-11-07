@@ -49,7 +49,6 @@ const TimetableGrid = ({
             <span>Filtered by: </span>
             {filters.department && <span className="filter-badge">Department: {filters.department}</span>}
             {filters.program && <span className="filter-badge">Program: {filters.program}</span>}
-            {filters.semester && <span className="filter-badge">Semester: {filters.semester}</span>}
             {filters.day && <span className="filter-badge">Day: {filters.day}</span>}
             {filters.teacher && (
               <span className="filter-badge">
@@ -133,11 +132,9 @@ const TimetableGrid = ({
                                   Teacher: {sectionData?.teacherId?.userId?.name || 'No teacher assigned'}
                                 </p>
                                 <p className="course-details">
-                                  {sectionData?.courseId?.department && `${sectionData.courseId.department}`}
+                                  {sectionData?.courseId?.department && `${typeof sectionData.courseId.department === 'object' ? sectionData.courseId.department.name : sectionData.courseId.department}`}
                                   {sectionData?.courseId?.department && sectionData.courseId?.program && ' | '}
-                                  {sectionData?.courseId?.program && `${sectionData.courseId.program}`}
-                                  {(sectionData?.courseId?.department || sectionData.courseId?.program) && sectionData.courseId?.semester && ' | '}
-                                  {sectionData?.courseId?.semester && `Semester ${sectionData.courseId.semester}`}
+                                  {sectionData?.courseId?.program && `${typeof sectionData.courseId.program === 'object' ? sectionData.courseId.program.name : sectionData.courseId.program}`}
                                 </p>
                                 <p className="time-duration">
                                   {schedule.timeSlot.startTime} - {schedule.timeSlot.endTime}

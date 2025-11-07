@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { departments, programs, semesters } from '../../config/academicConfig';
+import { useDepartmentsAndPrograms } from '../../hooks/useDepartmentsAndPrograms';
+import { semesters } from '../../config/academicConfig';
 import './StudentMarksPage.css';
 import { FiSearch, FiFilter, FiDownload } from 'react-icons/fi';
 import LoadingSpinner from '../../Components/LoadingSpinner';
@@ -8,6 +9,7 @@ import NoResultsFound from '../../Components/NoResultsFound';
 
 const StudentMarksPage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+  const { departments, programs, loading: deptProgLoading } = useDepartmentsAndPrograms();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [marksData, setMarksData] = useState([]);
@@ -212,10 +214,11 @@ const StudentMarksPage = () => {
               id="department"
               value={filters.department}
               onChange={(e) => handleFilterChange('department', e.target.value)}
+              disabled={deptProgLoading}
             >
               <option value="">Select Department</option>
               {departments.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
+                <option key={dept._id} value={dept._id}>{dept.name}</option>
               ))}
             </select>
           </div>
@@ -226,11 +229,11 @@ const StudentMarksPage = () => {
               id="program"
               value={filters.program}
               onChange={(e) => handleFilterChange('program', e.target.value)}
-              disabled={!filters.department}
+              disabled={!filters.department || deptProgLoading}
             >
               <option value="">Select Program</option>
               {programs.map(prog => (
-                <option key={prog} value={prog}>{prog}</option>
+                <option key={prog._id} value={prog._id}>{prog.name}</option>
               ))}
             </select>
           </div>

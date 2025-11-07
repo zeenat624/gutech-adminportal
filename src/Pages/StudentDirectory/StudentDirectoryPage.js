@@ -3,12 +3,13 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './StudentDirectoryPage.css';
 import { FiSearch, FiFilter, FiX } from 'react-icons/fi'; // Import icons
-import { departments, programs } from '../../config/academicConfig';
+import { useDepartmentsAndPrograms } from '../../hooks/useDepartmentsAndPrograms';
 import LoadingSpinner from '../../Components/LoadingSpinner';
 import NoResultsFound from '../../Components/NoResultsFound';
 
 const StudentDirectoryPage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
+  const { departments, programs, loading: deptProgLoading } = useDepartmentsAndPrograms();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
@@ -19,11 +20,7 @@ const StudentDirectoryPage = () => {
     semester: '',
     search: ''
   });
-  const [availableFilters] = useState({
-    departments: ['Computer Science', 'Information Technology', 'Software Engineering', 'Cyber Security'],
-    programs: ['BSc', 'MSc', 'PhD'],
-    semesters: Array.from({ length: 8 }, (_, i) => i + 1)
-  });
+  const [semesters, setSemesters] = useState([]);
   const [totalStudents, setTotalStudents] = useState(0);
 
   const fetchStudents = useCallback(async () => {
@@ -39,7 +36,7 @@ const StudentDirectoryPage = () => {
       const queryParams = {};
       if (filters.department) queryParams.department = filters.department;
       if (filters.program) queryParams.program = filters.program;
-      if (filters.semester) queryParams.currentSemester = filters.semester;
+      if (filters.semester) queryParams.semester = filters.semester;
       if (filters.search) queryParams.search = filters.search;
       
       const response = await axios.get(`${apiUrl}/api/students`, {
@@ -62,6 +59,25 @@ const StudentDirectoryPage = () => {
       setLoading(false);
     }
   }, [filters, apiUrl]);
+
+  // Fetch semesters when program is selected
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      if (filters.program) {
+        try {
+          const response = await axios.get(`${apiUrl}/api/student-directory/semesters`, {
+            params: { program: filters.program },
+          });
+          setSemesters(response.data.semesters || []);
+        } catch (err) {
+          setSemesters([]);
+        }
+      } else {
+        setSemesters([]);
+      }
+    };
+    fetchSemesters();
+  }, [filters.program, apiUrl]);
 
   useEffect(() => {
     fetchStudents();
@@ -164,10 +180,11 @@ const StudentDirectoryPage = () => {
               name="department"
               value={filters.department}
               onChange={handleFilterChange}
+              disabled={deptProgLoading}
             >
               <option value="">All Departments</option>
-              {availableFilters.departments.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
+              {departments.map(dept => (
+                <option key={dept._id} value={dept._id}>{dept.name}</option>
               ))}
             </select>
           </div>
@@ -179,11 +196,11 @@ const StudentDirectoryPage = () => {
               name="program"
               value={filters.program}
               onChange={handleFilterChange}
-              disabled={!filters.department}
+              disabled={!filters.department || deptProgLoading}
             >
               <option value="">All Programs</option>
-              {availableFilters.programs.map(prog => (
-                <option key={prog} value={prog}>{prog}</option>
+              {programs.map(prog => (
+                <option key={prog._id} value={prog._id}>{prog.name}</option>
               ))}
             </select>
           </div>
@@ -195,10 +212,10 @@ const StudentDirectoryPage = () => {
               name="semester"
               value={filters.semester}
               onChange={handleFilterChange}
-              disabled={!filters.program}
+              disabled={!filters.program || semesters.length === 0}
             >
               <option value="">All Semesters</option>
-              {availableFilters.semesters.map(sem => (
+              {semesters.map(sem => (
                 <option key={sem} value={sem}>Semester {sem}</option>
               ))}
             </select>
@@ -220,7 +237,7 @@ const StudentDirectoryPage = () => {
             <div className="active-filters">
               {filters.department && (
                 <span className="filter-tag">
-                  Department: {filters.department}
+                  Department: {departments.find(d => d._id === filters.department)?.name || filters.department}
                   <button onClick={() => handleFilterChange({ target: { name: 'department', value: '' } })}>
                     <FiX />
                   </button>
@@ -228,7 +245,7 @@ const StudentDirectoryPage = () => {
               )}
               {filters.program && (
                 <span className="filter-tag">
-                  Program: {filters.program}
+                  Program: {programs.find(p => p._id === filters.program)?.name || filters.program}
                   <button onClick={() => handleFilterChange({ target: { name: 'program', value: '' } })}>
                     <FiX />
                   </button>
@@ -272,8 +289,8 @@ const StudentDirectoryPage = () => {
                       <td>{student.rollNumber}</td>
                       <td>{student.name || 'N/A'}</td>
                       <td>{student.email || 'N/A'}</td>
-                      <td>{student.department}</td>
-                      <td>{student.program}</td>
+                      <td>{student.department?.name || student.department || 'N/A'}</td>
+                      <td>{student.program?.name || student.program || 'N/A'}</td>
                       <td>{student.currentSemester || 'N/A'}</td>
                       <td className="cgpa-cell">
                         <span className={`cgpa-badge ${student.CGPA >= 3.5 ? 'high' : student.CGPA >= 2.5 ? 'medium' : 'low'}`}>

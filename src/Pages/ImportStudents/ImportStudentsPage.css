@@ -220,6 +220,30 @@
     border-radius: 4px;
     margin-bottom: 1rem;
     border-left: 4px solid #c62828;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.error-message p {
+    margin: 0;
+    flex: 1;
+}
+
+.dismiss-error-btn {
+    background: transparent;
+    border: 1px solid #c62828;
+    color: #c62828;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s;
+}
+
+.dismiss-error-btn:hover {
+    background: #c62828;
+    color: white;
 }
 
 .success-message {
@@ -229,4 +253,29 @@
     border-radius: 4px;
     margin-bottom: 1rem;
     border-left: 4px solid #2e7d32;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.success-message p {
+    margin: 0;
+    flex: 1;
+    font-weight: 500;
+}
+
+.dismiss-success-btn {
+    background: transparent;
+    border: 1px solid #2e7d32;
+    color: #2e7d32;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s;
+}
+
+.dismiss-success-btn:hover {
+    background: #2e7d32;
+    color: white;
 } 

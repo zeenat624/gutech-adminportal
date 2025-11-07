@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import './Signup.css';
-import { departments } from '../../config/academicConfig';
+import { useDepartmentsAndPrograms } from '../../hooks/useDepartmentsAndPrograms';
 import { useAuth } from '../../Components/AuthContext';
 
 const Signup = () => {
+  const { departments, loading: deptProgLoading } = useDepartmentsAndPrograms();
   const [isSignupActive, setIsSignupActive] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -195,12 +196,12 @@ const Signup = () => {
               name="department"
               value={signupForm.department}
               onChange={handleSignupChange}
-              disabled={isSubmitting}
+              disabled={isSubmitting || deptProgLoading}
               className="department-select"
             >
               <option value="">Select Department</option>
               {departments.map((dept) => (
-                <option key={dept} value={dept}>{dept}</option>
+                <option key={dept._id} value={dept._id}>{dept.name}</option>
               ))}
             </select>
 
