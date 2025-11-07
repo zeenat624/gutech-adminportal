@@ -90,8 +90,6 @@ const Signup = () => {
       
       const response = await axios.post(`${apiUrl}/api/auth/register`, userData);
 
-      console.log('Registration successful:', response.data);
-
       // Reset form after successful registration
       setSignupForm({
         name: '',

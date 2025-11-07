@@ -154,7 +154,6 @@ const CourseRegistrationPage = () => {
             setProgress(0);
 
             const token = sessionStorage.getItem('adminToken');
-            console.log('Starting course registration process for course:', selectedCourse._id);
             
             // Process students in batches
             const batchSize = 10;
@@ -166,11 +165,8 @@ const CourseRegistrationPage = () => {
             let registeredCount = 0;
             let failedRegistrations = [];
             
-            console.log(`Processing ${preview.length} students in ${batches.length} batches`);
-            
             for (let i = 0; i < batches.length; i++) {
                 const batch = batches[i];
-                console.log(`Processing batch ${i + 1}/${batches.length}`);
                 
                 // Register students in the current batch
                 await Promise.all(batch.map(async (student) => {
@@ -178,14 +174,12 @@ const CourseRegistrationPage = () => {
                         // Get or create section
                         let sectionResponse;
                         try {
-                            console.log(`Getting section ${student.section} for student ${student.rollNumber}`);
                             sectionResponse = await axios.get(
                                 `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${student.section}`,
                                 { headers: { 'x-auth-token': token } }
                             );
                         } catch (error) {
                             if (error.response && error.response.status === 404) {
-                                console.log(`Section ${student.section} not found, creating it`);
                                 const createSectionResponse = await axios.post(
                                     `${apiUrl}/api/sections/course/${selectedCourse._id}/section/${student.section}`,
                                     {},
@@ -206,7 +200,6 @@ const CourseRegistrationPage = () => {
                             return;
                         }
 
-                        console.log(`Registering student ${student.rollNumber} for section ${sectionResponse.data._id}`);
                         await axios.post(
                             `${apiUrl}/api/course-registration/register`,
                             {
@@ -238,13 +231,6 @@ const CourseRegistrationPage = () => {
                 const percentCompleted = Math.round(((i + 1) / batches.length) * 100);
                 setProgress(percentCompleted);
             }
-
-            console.log('Registration complete:', {
-                total: preview.length,
-                successful: registeredCount,
-                failed: failedRegistrations.length,
-                failedDetails: failedRegistrations
-            });
 
             setSuccess(`Successfully registered ${registeredCount} out of ${preview.length} students for ${selectedCourse.name}`);
             if (failedRegistrations.length > 0) {

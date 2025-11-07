@@ -179,7 +179,6 @@ const TeacherAssignmentPage = () => {
         headers: { 'x-auth-token': token }
       });
       
-      console.log('Fetched sections:', response.data);
       setSections(response.data);
       
       // Initialize sectionTeachers with current teacher assignments
@@ -189,7 +188,6 @@ const TeacherAssignmentPage = () => {
           initialSectionTeachers[section._id] = section.teacher.id;
         }
       });
-      console.log('Initializing sectionTeachers with:', initialSectionTeachers);
       setSectionTeachers(initialSectionTeachers);
       
     } catch (err) {
@@ -231,8 +229,6 @@ const TeacherAssignmentPage = () => {
   };
 
   const handleAssign = async (section, teacherId) => {
-    console.log('handleAssign called with section:', section, 'and teacherId:', teacherId);
-    
     if (!teacherId) {
       setError('Please select a teacher');
       return;
@@ -251,12 +247,6 @@ const TeacherAssignmentPage = () => {
           throw new Error('Invalid section ID');
         }
         
-        console.log('Updating teacher for section:', {
-          sectionId: sectionId,
-          teacherId: teacherId,
-          section: section.section
-        });
-        
         // Update existing section
         const response = await axios.put(`${apiUrl}/api/sections/${sectionId}`, {
           teacherId: teacherId,
@@ -264,8 +254,6 @@ const TeacherAssignmentPage = () => {
         }, {
           headers: { 'x-auth-token': token }
         });
-        
-        console.log('API response:', response.data);
         setSuccess('Teacher assigned successfully');
       } else {
         // Add new section
@@ -280,12 +268,6 @@ const TeacherAssignmentPage = () => {
           return;
         }
         
-        console.log('Adding new section:', {
-          courseId: selectedCourse,
-          teacherId: teacherId,
-          section: newSection.section
-        });
-        
         const response = await axios.post(`${apiUrl}/api/sections/addSection`, {
           courseId: selectedCourse,
           teacherId: teacherId,
@@ -293,8 +275,6 @@ const TeacherAssignmentPage = () => {
         }, {
           headers: { 'x-auth-token': token }
         });
-        
-        console.log('API response:', response.data);
         setSuccess('Section added successfully');
         setNewSection({ section: '', teacherId: '' });
       }
@@ -309,11 +289,6 @@ const TeacherAssignmentPage = () => {
   };
 
   const handleAddSection = async () => {
-    console.log('handleAddSection called with:', {
-      selectedCourse,
-      newSection
-    });
-    
     if (!selectedCourse) {
       setError('Please select a course');
       return;
@@ -334,12 +309,6 @@ const TeacherAssignmentPage = () => {
       setLoading(true);
       const token = sessionStorage.getItem('adminToken');
       
-      console.log('Adding new section:', {
-        courseId: selectedCourse,
-        teacherId: newSection.teacherId,
-        section: newSection.section
-      });
-      
       const response = await axios.post(`${apiUrl}/api/sections/addSection`, {
         courseId: selectedCourse,
         teacherId: newSection.teacherId,
@@ -347,8 +316,6 @@ const TeacherAssignmentPage = () => {
       }, {
         headers: { 'x-auth-token': token }
       });
-      
-      console.log('API response:', response.data);
       setSuccess('Section added successfully');
       setNewSection({ section: '', teacherId: '' });
       fetchSections();
@@ -374,7 +341,6 @@ const TeacherAssignmentPage = () => {
   };
 
   const handleTeacherChange = (sectionId, teacherId) => {
-    console.log('Setting teacher for section:', sectionId, 'to:', teacherId);
     // Create a new object to ensure React detects the state change
     const updatedSectionTeachers = { ...sectionTeachers };
     updatedSectionTeachers[sectionId] = teacherId;

@@ -81,9 +81,6 @@ function ClassSchedule() {
 
   const fetchSections = async () => {
     try {
-      console.log('Fetching sections...');
-      console.log('Token:', sessionStorage.getItem('adminToken'));
-      
       // Use the deep populate query parameter to include the userId field
       const response = await axios.get(`${apiUrl}/api/sections`, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` },
@@ -92,16 +89,6 @@ function ClassSchedule() {
           deep: 'true'  // This parameter should trigger deep population in the backend
         }
       });
-      
-      console.log('Sections response:', response.data);
-      
-      // Log detailed teacher information if available
-      if (response.data && response.data.length > 0) {
-        console.log('First section teacher data:', response.data[0].teacherId);
-        if (response.data[0].teacherId && response.data[0].teacherId.userId) {
-          console.log('Teacher userId:', response.data[0].teacherId.userId);
-        }
-      }
       
       setSections(response.data);
     } catch (error) {
@@ -128,8 +115,6 @@ function ClassSchedule() {
       const response = await axios.get(`${apiUrl}/api/section-schedules/section/${sectionId}`, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('adminToken')}` }
       });
-      
-      console.log('Raw schedule data:', response.data);
       
       // Collect unique course IDs for fetching additional details
       const courseIds = new Set();
@@ -190,8 +175,6 @@ function ClassSchedule() {
           teacherId: sectionData?.teacherId || schedule.teacherId || { _id: 'unknown' }
         };
       });
-      
-      console.log('Normalized schedule data:', normalizedSchedules);
       
       setSchedules(normalizedSchedules);
       
@@ -528,9 +511,6 @@ function ClassSchedule() {
         }
       });
       
-      console.log(`Retrieved ${allSchedules.length} schedules across all sections`);
-      console.log('Raw all schedules data:', allSchedules);
-      
       // Collect unique course IDs for fetching additional details
       const courseIds = new Set();
       allSchedules.forEach(schedule => {
@@ -589,8 +569,6 @@ function ClassSchedule() {
           teacherId: schedule.teacherId || { _id: 'unknown' }
         };
       });
-      
-      console.log('Normalized all schedules data:', normalizedSchedules);
       
       setSchedules(normalizedSchedules);
       
