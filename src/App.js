@@ -11,6 +11,7 @@ import CoursePage from "./Pages/Course/CoursePage.js";
 import AssignSectionPage from "./Pages/AssignSection/AssignSectionPage.js";
 import CourseRegistrationPage from "./Pages/CourseRegistration/CourseRegistrationPage";
 import StudentMarksPage from "./Pages/StudentMarks/StudentMarksPage";
+import AttendancePage from "./Pages/Attendance/AttendancePage";
 import { AuthProvider } from "./Components/AuthContext";
 import PrivateRoute from "./Components/PrivateRoute";
 
@@ -31,6 +32,7 @@ function App() {
                 <Route path="import-students" element={<ImportStudentsPage />} />
                 <Route path="student-directory" element={<StudentDirectoryPage />} />
                 <Route path="marks" element={<StudentMarksPage />} />
+                <Route path="attendance" element={<AttendancePage />} />
               </Route>
             </Route>
           </Routes>

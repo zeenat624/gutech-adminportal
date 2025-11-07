@@ -225,13 +225,14 @@ input:focus, select:focus, textarea:focus {
   border-bottom: 1px solid var(--border-color);
 }
 
-.search-container {
+/* Scoped to CoursePage only - using parent class to prevent global conflicts */
+.course-container .search-container {
   position: relative;
   flex: 1;
   min-width: 250px;
 }
 
-.search-icon {
+.course-container .search-icon {
   position: absolute;
   left: var(--spacing-sm);
   top: 50%;
@@ -239,7 +240,7 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-muted);
 }
 
-.search-input {
+.course-container .search-input {
   padding-left: 2.5rem;
   height: 40px;
 }

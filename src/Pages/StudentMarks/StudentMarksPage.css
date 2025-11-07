@@ -284,12 +284,15 @@
   align-items: center;
 }
 
-.search-container {
+/* Scoped to StudentMarksPage only - using a parent class to prevent global conflicts */
+.student-marks-page .search-container,
+.student-marks-container .search-container {
   position: relative;
   width: 300px;
 }
 
-.search-input {
+.student-marks-page .search-input,
+.student-marks-container .search-input {
   width: 100%;
   padding: 8px 12px;
   padding-left: 32px;
@@ -301,13 +304,15 @@
   transition: var(--transition-normal);
 }
 
-.search-input:focus {
+.student-marks-page .search-input:focus,
+.student-marks-container .search-input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
 
-.search-container::before {
+.student-marks-page .search-container::before,
+.student-marks-container .search-container::before {
   content: "🔍";
   position: absolute;
   left: 10px;
