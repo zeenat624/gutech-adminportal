@@ -44,7 +44,7 @@ const AttendancePage = () => {
     }
   };
 
-  // Fetch attendance for selected course
+  // Fetch attendance for selected course (aggregated from all sections)
   const fetchCourseAttendance = async (courseId) => {
     if (!courseId) return;
 
@@ -52,57 +52,93 @@ const AttendancePage = () => {
     setError(null);
 
     try {
-      // Fetch attendance records
-      const attendanceResponse = await axios.get(`${apiUrl}/api/teachers/attendance?courseId=${courseId}`, {
+      // First, get all sections for this course
+      const sectionsResponse = await axios.get(`${apiUrl}/api/sections/course/${courseId}`, {
         headers: {
           "x-auth-token": getAuthToken(),
         },
       });
 
-      if (attendanceResponse.data && attendanceResponse.data.attendance) {
-        const attendanceArray = attendanceResponse.data.attendance;
-        const courseData = attendanceArray.find((item) => item.courseId === courseId || item.courseId?.toString() === courseId.toString());
+      if (!sectionsResponse.data || !Array.isArray(sectionsResponse.data) || sectionsResponse.data.length === 0) {
+        setAttendanceData({});
+        setDates([]);
+        setStudents([]);
+        setLoading(false);
+        return;
+      }
 
-        if (courseData && courseData.dates) {
-          // Extract all unique dates
-          const allDates = Object.keys(courseData.dates).sort();
-          setDates(allDates);
+      // Fetch attendance for each section and aggregate
+      const allSectionAttendance = [];
+      for (const section of sectionsResponse.data) {
+        const sectionId = section._id || section.id;
+        if (!sectionId) continue;
 
-          // Extract students from attendance records first (they have the most complete info)
+        try {
+          const attendanceResponse = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}`, {
+            headers: {
+              "x-auth-token": getAuthToken(),
+            },
+          });
+
+          if (attendanceResponse.data && attendanceResponse.data.attendance) {
+            allSectionAttendance.push(...attendanceResponse.data.attendance);
+          }
+        } catch (err) {
+          console.error(`Error fetching attendance for section ${sectionId}:`, err);
+        }
+      }
+
+      // Process aggregated attendance from all sections
+      if (allSectionAttendance.length > 0) {
+        // Find all section data for this course
+        const courseSections = allSectionAttendance.filter((item) => item.courseId === courseId || item.courseId?.toString() === courseId.toString());
+
+        if (courseSections.length > 0) {
+          // Aggregate dates from all sections
+          const allDatesSet = new Set();
           const studentsFromAttendance = new Map();
-          allDates.forEach((dateStr) => {
-            if (courseData.dates[dateStr] && courseData.dates[dateStr].students) {
-              courseData.dates[dateStr].students.forEach((record) => {
-                const studentId = record.studentId?.toString() || record.studentId;
-                if (studentId && !studentsFromAttendance.has(studentId)) {
-                  studentsFromAttendance.set(studentId, {
-                    id: studentId,
-                    rollNumber: record.rollNumber || "",
-                    name: record.name || "Unknown",
+          const processedData = {};
+
+          // Process each section's attendance data
+          courseSections.forEach((sectionData) => {
+            if (sectionData.dates) {
+              Object.keys(sectionData.dates).forEach((dateStr) => {
+                allDatesSet.add(dateStr);
+
+                if (sectionData.dates[dateStr] && sectionData.dates[dateStr].students) {
+                  sectionData.dates[dateStr].students.forEach((record) => {
+                    const studentId = record.studentId?.toString() || record.studentId;
+
+                    // Add student to map if not already present
+                    if (studentId && !studentsFromAttendance.has(studentId)) {
+                      studentsFromAttendance.set(studentId, {
+                        id: studentId,
+                        rollNumber: record.rollNumber || "",
+                        name: record.name || "Unknown",
+                      });
+                    }
+
+                    // Process attendance data (if multiple sections have same student on same date, keep the latest)
+                    if (!processedData[studentId]) {
+                      processedData[studentId] = {
+                        studentId: studentId,
+                        rollNumber: record.rollNumber || "",
+                        name: record.name || "Unknown",
+                        attendance: {},
+                      };
+                    }
+                    // Only update if not already set (or use the latest one)
+                    if (!processedData[studentId].attendance[dateStr]) {
+                      processedData[studentId].attendance[dateStr] = record.status;
+                    }
                   });
                 }
               });
             }
           });
 
-          // Process attendance data
-          const processedData = {};
-          allDates.forEach((dateStr) => {
-            if (courseData.dates[dateStr] && courseData.dates[dateStr].students) {
-              courseData.dates[dateStr].students.forEach((record) => {
-                const studentId = record.studentId?.toString() || record.studentId;
-                if (!processedData[studentId]) {
-                  processedData[studentId] = {
-                    studentId: studentId,
-                    rollNumber: record.rollNumber || "",
-                    name: record.name || "Unknown",
-                    attendance: {},
-                  };
-                }
-                processedData[studentId].attendance[dateStr] = record.status;
-              });
-            }
-          });
+          const allDates = Array.from(allDatesSet).sort();
+          setDates(allDates);
 
           setAttendanceData(processedData);
 
@@ -260,7 +296,7 @@ const AttendancePage = () => {
 
   // Export to CSV
   const exportToCSV = () => {
-    if (!selectedCourse || !attendanceData || Object.keys(attendanceData).length === 0) {
+    if (!selectedCourse || !attendanceData || Object.keys(attendanceData).length === 0 || students.length === 0) {
       toast.error("No attendance data to export");
       return;
     }
@@ -273,13 +309,16 @@ const AttendancePage = () => {
       const header = ["Roll Number", "Name", ...dates];
       csvData.push(header);
 
-      // Data rows: Student info + attendance for each date
-      Object.values(attendanceData).forEach((student) => {
+      // Data rows: Use students array for proper names and roll numbers, attendanceData for attendance status
+      students.forEach((student) => {
+        const studentId = student.id?.toString() || student.id;
+        const studentData = attendanceData[studentId];
+
         const row = [
           student.rollNumber || "",
-          student.name || "",
+          student.name || "Unknown Student",
           ...dates.map((date) => {
-            const status = student.attendance[date] || "";
+            const status = studentData?.attendance[date] || "";
             // Convert status to readable format
             if (status === "present") return "P";
             if (status === "absent") return "A";
