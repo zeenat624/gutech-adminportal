@@ -440,6 +440,168 @@
   }
 }
 
+/* Section Tabs Container */
+.section-tabs-container {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.section-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.section-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.section-tabs::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.section-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.section-tabs::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.section-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.875rem 1.25rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 160px;
+  white-space: nowrap;
+  position: relative;
+  font-family: inherit;
+}
+
+.section-tab:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.section-tab.active {
+  background-color: #ffffff;
+  border-color: #991d20;
+  border-bottom-color: #ffffff;
+  color: #991d20;
+  font-weight: 500;
+  box-shadow: 0 -2px 4px -1px rgba(0, 0, 0, 0.05);
+  z-index: 1;
+}
+
+.section-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #ffffff;
+}
+
+.section-tab .tab-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: inherit;
+}
+
+.section-tab .tab-teacher {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.section-tab.active .tab-teacher {
+  color: #991d20;
+  opacity: 0.8;
+}
+
+.section-tab .tab-count {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  background-color: #e2e8f0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+}
+
+.section-tab.active .tab-count {
+  background-color: rgba(153, 29, 32, 0.1);
+  color: #991d20;
+}
+
+/* Sections Container */
+.sections-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section-attendance-block {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  margin-top: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-title h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.section-teacher {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.section-export-btn {
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+}
+
+.section-empty-state {
+  height: 200px;
+  margin: 1rem 0;
+}
+
+.section-empty-state svg {
+  color: #cbd5e1;
+}
+
 @media (max-width: 768px) {
   .attendance-page {
     padding: 1rem;
@@ -457,5 +619,10 @@
   .attendance-table th,
   .attendance-table td {
     padding: 0.5rem 0.75rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

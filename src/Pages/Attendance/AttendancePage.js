@@ -10,12 +10,12 @@ const AttendancePage = () => {
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [attendanceData, setAttendanceData] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [dates, setDates] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [selectedSectionId, setSelectedSectionId] = useState(null);
+  const [sectionAttendanceData, setSectionAttendanceData] = useState({}); // { sectionId: { students: [], dates: [], attendanceData: {} } }
+  const [sectionSearchQueries, setSectionSearchQueries] = useState({}); // { sectionId: searchQuery }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Get auth token
   const getAuthToken = () => {
@@ -44,12 +44,16 @@ const AttendancePage = () => {
     }
   };
 
-  // Fetch attendance for selected course (aggregated from all sections)
+  // Fetch attendance for selected course - separate by sections
   const fetchCourseAttendance = async (courseId) => {
     if (!courseId) return;
 
     setLoading(true);
     setError(null);
+    setSections([]);
+    setSelectedSectionId(null);
+    setSectionAttendanceData({});
+    setSectionSearchQueries({});
 
     try {
       // First, get all sections for this course
@@ -60,53 +64,61 @@ const AttendancePage = () => {
       });
 
       if (!sectionsResponse.data || !Array.isArray(sectionsResponse.data) || sectionsResponse.data.length === 0) {
-        setAttendanceData({});
-        setDates([]);
-        setStudents([]);
+        setSections([]);
         setLoading(false);
         return;
       }
 
-      // Fetch attendance for each section and aggregate
-      const allSectionAttendance = [];
+      // Store sections
+      setSections(sectionsResponse.data);
+
+      // Fetch attendance for each section separately
+      const newSectionAttendanceData = {};
+      const newSectionSearchQueries = {};
+
       for (const section of sectionsResponse.data) {
-        const sectionId = section._id || section.id;
+        const sectionId = section.id || section._id;
         if (!sectionId) continue;
 
+        // Initialize search query for this section
+        newSectionSearchQueries[sectionId] = "";
+
         try {
+          // Fetch attendance for this specific section
           const attendanceResponse = await axios.get(`${apiUrl}/api/teachers/attendance?sectionId=${sectionId}`, {
             headers: {
               "x-auth-token": getAuthToken(),
             },
           });
 
+          // Fetch students for this section
+          const sectionStudents = await fetchStudentsForSection(sectionId);
+
+          // Process attendance data for this section
+          let sectionDates = [];
+          let sectionAttendance = {};
+          let sectionStudentsList = sectionStudents;
+
           if (attendanceResponse.data && attendanceResponse.data.attendance) {
-            allSectionAttendance.push(...attendanceResponse.data.attendance);
-          }
-        } catch (err) {
-          console.error(`Error fetching attendance for section ${sectionId}:`, err);
-        }
-      }
+            // Find attendance data for this section
+            // The API returns attendance grouped by sectionId, so we need to find the matching section
+            const sectionIdStr = sectionId?.toString() || sectionId;
+            const sectionAttendanceData = attendanceResponse.data.attendance.find((item) => {
+              const itemSectionId = item.sectionId?.toString() || item.sectionId;
+              return itemSectionId === sectionIdStr;
+            });
 
-      // Process aggregated attendance from all sections
-      if (allSectionAttendance.length > 0) {
-        // Find all section data for this course
-        const courseSections = allSectionAttendance.filter((item) => item.courseId === courseId || item.courseId?.toString() === courseId.toString());
+            if (sectionAttendanceData && sectionAttendanceData.dates) {
+              // Extract all dates
+              const datesSet = new Set();
+              const studentsFromAttendance = new Map();
+              const processedData = {};
 
-        if (courseSections.length > 0) {
-          // Aggregate dates from all sections
-          const allDatesSet = new Set();
-          const studentsFromAttendance = new Map();
-          const processedData = {};
+              Object.keys(sectionAttendanceData.dates).forEach((dateStr) => {
+                datesSet.add(dateStr);
 
-          // Process each section's attendance data
-          courseSections.forEach((sectionData) => {
-            if (sectionData.dates) {
-              Object.keys(sectionData.dates).forEach((dateStr) => {
-                allDatesSet.add(dateStr);
-
-                if (sectionData.dates[dateStr] && sectionData.dates[dateStr].students) {
-                  sectionData.dates[dateStr].students.forEach((record) => {
+                if (sectionAttendanceData.dates[dateStr] && sectionAttendanceData.dates[dateStr].students) {
+                  sectionAttendanceData.dates[dateStr].students.forEach((record) => {
                     const studentId = record.studentId?.toString() || record.studentId;
 
                     // Add student to map if not already present
@@ -118,7 +130,7 @@ const AttendancePage = () => {
                       });
                     }
 
-                    // Process attendance data (if multiple sections have same student on same date, keep the latest)
+                    // Process attendance data
                     if (!processedData[studentId]) {
                       processedData[studentId] = {
                         studentId: studentId,
@@ -127,83 +139,90 @@ const AttendancePage = () => {
                         attendance: {},
                       };
                     }
-                    // Only update if not already set (or use the latest one)
-                    if (!processedData[studentId].attendance[dateStr]) {
-                      processedData[studentId].attendance[dateStr] = record.status;
-                    }
+                    processedData[studentId].attendance[dateStr] = record.status;
                   });
                 }
               });
-            }
-          });
 
-          const allDates = Array.from(allDatesSet).sort();
-          setDates(allDates);
+              sectionDates = Array.from(datesSet).sort();
+              sectionAttendance = processedData;
 
-          setAttendanceData(processedData);
+              // Merge students from attendance with fetched students
+              if (studentsFromAttendance.size > 0) {
+                const mergedStudents = new Map();
 
-          // Always fetch students from course registrations to get complete student list with names
-          const fetchedStudents = await fetchStudentsForCourse(courseId);
+                // First add all fetched students
+                sectionStudents.forEach((student) => {
+                  const studentId = student.id?.toString() || student.id;
+                  mergedStudents.set(studentId, student);
+                });
 
-          // Use fetched students (they have proper names from the API)
-          // If we have students from attendance, merge them to ensure we have all students
-          if (studentsFromAttendance.size > 0) {
-            const mergedStudents = new Map();
+                // Then add any students from attendance that might not be in fetched list
+                studentsFromAttendance.forEach((attStudent, studentId) => {
+                  if (!mergedStudents.has(studentId)) {
+                    mergedStudents.set(studentId, attStudent);
+                  }
+                });
 
-            // First add all fetched students
-            fetchedStudents.forEach((student) => {
-              const studentId = student.id?.toString() || student.id;
-              mergedStudents.set(studentId, student);
-            });
-
-            // Then add any students from attendance that might not be in fetched list
-            studentsFromAttendance.forEach((attStudent, studentId) => {
-              if (!mergedStudents.has(studentId)) {
-                mergedStudents.set(studentId, attStudent);
+                sectionStudentsList = Array.from(mergedStudents.values());
               }
-            });
-
-            setStudents(Array.from(mergedStudents.values()));
-          } else {
-            setStudents(fetchedStudents);
+            }
           }
-        } else {
-          setAttendanceData({});
-          setDates([]);
+
+          // Store attendance data for this section
+          newSectionAttendanceData[sectionId] = {
+            students: sectionStudentsList,
+            dates: sectionDates,
+            attendanceData: sectionAttendance,
+          };
+        } catch (err) {
+          console.error(`Error fetching attendance for section ${sectionId}:`, err);
+          // Initialize empty data for this section
+          newSectionAttendanceData[sectionId] = {
+            students: [],
+            dates: [],
+            attendanceData: {},
+          };
         }
-      } else {
-        setAttendanceData({});
-        setDates([]);
+      }
+
+      setSectionAttendanceData(newSectionAttendanceData);
+      setSectionSearchQueries(newSectionSearchQueries);
+
+      // Auto-select first section if available
+      if (sectionsResponse.data && sectionsResponse.data.length > 0) {
+        const firstSectionId = sectionsResponse.data[0].id || sectionsResponse.data[0]._id;
+        if (firstSectionId) {
+          setSelectedSectionId(firstSectionId);
+        }
       }
     } catch (error) {
       handleApiError(error);
-      setAttendanceData({});
-      setDates([]);
+      setSections([]);
+      setSectionAttendanceData({});
+      setSelectedSectionId(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch students for a course directly from course registrations
-  const fetchStudentsForCourse = async (courseId) => {
+  // Fetch students for a specific section
+  const fetchStudentsForSection = async (sectionId) => {
     try {
-      // Use the new endpoint to get students directly by courseId
-      const studentsResponse = await axios.get(`${apiUrl}/api/course-registration/getStudentsByCourse/${courseId}`, {
+      const sectionStudentsResponse = await axios.get(`${apiUrl}/api/course-registration/getStudents/${sectionId.toString()}`, {
         headers: {
           "x-auth-token": getAuthToken(),
         },
       });
 
-      if (studentsResponse.data && Array.isArray(studentsResponse.data)) {
-        // Ensure all students have proper id, rollNumber, and name
-        const formattedStudents = studentsResponse.data.map((student) => {
-          // Handle different possible structures from API
-          const studentId = student.id?.toString() || student._id?.toString() || student.id || student._id;
-          const rollNumber = student.rollNumber || "";
-          const name = student.name || student.userId?.name || "Unknown Student";
+      if (sectionStudentsResponse.data && Array.isArray(sectionStudentsResponse.data)) {
+        const formattedStudents = sectionStudentsResponse.data.map((reg) => {
+          const studentId = reg.id || reg.studentId?._id || reg.studentId?.id || reg.studentId;
+          const rollNumber = reg.rollNumber || reg.studentId?.rollNumber || "";
+          const name = reg.name || reg.studentId?.userId?.name || reg.studentId?.name || "Unknown Student";
 
           return {
-            id: studentId,
+            id: studentId?.toString() || studentId,
             rollNumber: rollNumber,
             name: name,
           };
@@ -213,61 +232,8 @@ const AttendancePage = () => {
         return [];
       }
     } catch (error) {
-      console.error("Error fetching students for course:", error);
-      // Fallback: try getting from sections if direct endpoint fails
-      try {
-        const sectionsResponse = await axios.get(`${apiUrl}/api/sections/course/${courseId}`, {
-          headers: {
-            "x-auth-token": getAuthToken(),
-          },
-        });
-
-        if (sectionsResponse.data && Array.isArray(sectionsResponse.data) && sectionsResponse.data.length > 0) {
-          const allStudents = new Map();
-
-          // Fetch students from each section
-          for (const section of sectionsResponse.data) {
-            try {
-              const sectionId = section._id || section.id;
-              if (!sectionId) continue;
-
-              const sectionStudentsResponse = await axios.get(`${apiUrl}/api/course-registration/getStudents/${sectionId.toString()}`, {
-                headers: {
-                  "x-auth-token": getAuthToken(),
-                },
-              });
-
-              if (sectionStudentsResponse.data && Array.isArray(sectionStudentsResponse.data)) {
-                sectionStudentsResponse.data.forEach((reg) => {
-                  const studentId = reg.id || reg.studentId?._id || reg.studentId?.id || reg.studentId;
-                  const rollNumber = reg.rollNumber || reg.studentId?.rollNumber || "";
-                  const name = reg.name || reg.studentId?.userId?.name || reg.studentId?.name || "Unknown Student";
-
-                  if (studentId) {
-                    const normalizedId = studentId.toString();
-                    if (!allStudents.has(normalizedId)) {
-                      allStudents.set(normalizedId, {
-                        id: normalizedId,
-                        rollNumber: rollNumber,
-                        name: name,
-                      });
-                    }
-                  }
-                });
-              }
-            } catch (err) {
-              console.error(`Error fetching students for section:`, err);
-            }
-          }
-
-          return Array.from(allStudents.values());
-        } else {
-          return [];
-        }
-      } catch (fallbackError) {
-        console.error("Fallback method also failed:", fallbackError);
-        return [];
-      }
+      console.error("Error fetching students for section:", error);
+      return [];
     }
   };
 
@@ -290,14 +256,35 @@ const AttendancePage = () => {
   // Handle course selection
   const handleCourseChange = (course) => {
     setSelectedCourse(course);
-    setSearchQuery("");
+    setSelectedSectionId(null);
     fetchCourseAttendance(course._id || course.id);
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
-    if (!selectedCourse || !attendanceData || Object.keys(attendanceData).length === 0 || students.length === 0) {
-      toast.error("No attendance data to export");
+  // Handle section selection
+  const handleSectionChange = (sectionId) => {
+    setSelectedSectionId(sectionId);
+    // Reset search query for the selected section
+    if (!sectionSearchQueries[sectionId]) {
+      setSectionSearchQueries((prev) => ({
+        ...prev,
+        [sectionId]: "",
+      }));
+    }
+  };
+
+  // Handle section search query change
+  const handleSectionSearchChange = (sectionId, query) => {
+    setSectionSearchQueries((prev) => ({
+      ...prev,
+      [sectionId]: query,
+    }));
+  };
+
+  // Export to CSV for a specific section
+  const exportSectionToCSV = (sectionId, sectionName) => {
+    const sectionData = sectionAttendanceData[sectionId];
+    if (!sectionData || !sectionData.attendanceData || Object.keys(sectionData.attendanceData).length === 0 || sectionData.students.length === 0) {
+      toast.error("No attendance data to export for this section");
       return;
     }
 
@@ -306,18 +293,18 @@ const AttendancePage = () => {
       const csvData = [];
 
       // Header row: Student Info + Dates
-      const header = ["Roll Number", "Name", ...dates];
+      const header = ["Roll Number", "Name", ...sectionData.dates];
       csvData.push(header);
 
       // Data rows: Use students array for proper names and roll numbers, attendanceData for attendance status
-      students.forEach((student) => {
+      sectionData.students.forEach((student) => {
         const studentId = student.id?.toString() || student.id;
-        const studentData = attendanceData[studentId];
+        const studentData = sectionData.attendanceData[studentId];
 
         const row = [
           student.rollNumber || "",
           student.name || "Unknown Student",
-          ...dates.map((date) => {
+          ...sectionData.dates.map((date) => {
             const status = studentData?.attendance[date] || "";
             // Convert status to readable format
             if (status === "present") return "P";
@@ -336,7 +323,7 @@ const AttendancePage = () => {
       const colWidths = [
         { wch: 15 }, // Roll Number
         { wch: 30 }, // Name
-        ...dates.map(() => ({ wch: 8 })), // Date columns
+        ...sectionData.dates.map(() => ({ wch: 8 })), // Date columns
       ];
       ws["!cols"] = colWidths;
 
@@ -347,7 +334,7 @@ const AttendancePage = () => {
       // Generate filename
       const courseName = selectedCourse.name || "Course";
       const courseCode = selectedCourse.code || "";
-      const filename = `Attendance_${courseCode}_${courseName}_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const filename = `Attendance_${courseCode}_${courseName}_${sectionName}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
       // Download
       XLSX.writeFile(wb, filename);
@@ -358,15 +345,17 @@ const AttendancePage = () => {
     }
   };
 
-  // Filter students based on search query
-  const filteredStudents = students.filter(
-    (student) => student.name.toLowerCase().includes(searchQuery.toLowerCase()) || student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter students for a section based on search query
+  const getFilteredStudentsForSection = (sectionId) => {
+    const sectionData = sectionAttendanceData[sectionId];
+    if (!sectionData) return [];
 
-  // Get attendance status for a student on a specific date
-  const getAttendanceStatus = (studentId, date) => {
-    if (!attendanceData || !attendanceData[studentId]) return "";
-    return attendanceData[studentId].attendance[date] || "";
+    const searchQuery = sectionSearchQueries[sectionId] || "";
+    if (!searchQuery) return sectionData.students;
+
+    return sectionData.students.filter(
+      (student) => student.name.toLowerCase().includes(searchQuery.toLowerCase()) || student.rollNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   };
 
   // Format date for display
@@ -387,12 +376,6 @@ const AttendancePage = () => {
           <h1>Attendance Management</h1>
           <p>View attendance records course-wise</p>
         </div>
-        {selectedCourse && attendanceData && Object.keys(attendanceData).length > 0 && (
-          <button className="export-btn" onClick={exportToCSV}>
-            <Download size={18} />
-            Export to Excel
-          </button>
-        )}
       </div>
 
       {error && (
@@ -436,87 +419,152 @@ const AttendancePage = () => {
                 <p className="course-code-text">{selectedCourse.code}</p>
               </div>
 
-              {/* Search */}
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Search students by name or roll number..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input"
-                />
-              </div>
-
-              {/* Attendance Table */}
               {loading ? (
                 <div className="loading">Loading attendance data...</div>
-              ) : dates.length === 0 ? (
+              ) : sections.length === 0 ? (
                 <div className="empty-state">
                   <Calendar size={48} />
-                  <p>No attendance records found for this course</p>
+                  <p>No sections found for this course</p>
                 </div>
               ) : (
-                <div className="attendance-table-container">
-                  <table className="attendance-table">
-                    <thead>
-                      <tr>
-                        <th className="sticky-col">Roll Number</th>
-                        <th className="sticky-col">Name</th>
-                        {dates.map((date) => (
-                          <th key={date} className="date-header">
-                            {formatDate(date)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStudents.length === 0 ? (
-                        <tr>
-                          <td colSpan={dates.length + 2} className="no-results">
-                            No students found
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredStudents.map((student) => {
-                          const studentId = student.id?.toString() || student.id;
-                          const studentData = attendanceData[studentId];
-                          return (
-                            <tr key={studentId}>
-                              <td className="sticky-col roll-number">{student.rollNumber || "N/A"}</td>
-                              <td className="sticky-col student-name">{student.name || "Unknown Student"}</td>
-                              {dates.map((date) => {
-                                const status = studentData?.attendance[date] || "";
-                                return (
-                                  <td key={date} className={`attendance-cell ${status}`}>
-                                    {status === "present" ? "P" : status === "absent" ? "A" : status === "late" ? "L" : ""}
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                <>
+                  {/* Section Tabs */}
+                  <div className="section-tabs-container">
+                    <div className="section-tabs">
+                      {sections.map((section) => {
+                        const sectionId = section.id || section._id;
+                        const sectionName = section.section ? `Section ${section.section}` : `Section ${sectionId}`;
+                        const isActive = selectedSectionId === sectionId;
+                        const sectionData = sectionAttendanceData[sectionId];
+                        const studentCount = sectionData?.students?.length || 0;
 
-              {/* Legend */}
-              {dates.length > 0 && (
-                <div className="attendance-legend">
-                  <div className="legend-item">
-                    <span className="legend-dot present"></span>
-                    <span>Present (P)</span>
+                        return (
+                          <button key={sectionId} className={`section-tab ${isActive ? "active" : ""}`} onClick={() => handleSectionChange(sectionId)}>
+                            <span className="tab-label">{sectionName}</span>
+                            {section.teacher && <span className="tab-teacher">{section.teacher.name || "N/A"}</span>}
+                            {studentCount > 0 && <span className="tab-count">{studentCount} students</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <span className="legend-dot absent"></span>
-                    <span>Absent (A)</span>
-                  </div>
-                  <div className="legend-item">
-                    <span className="legend-dot late"></span>
-                    <span>Late (L)</span>
-                  </div>
-                </div>
+
+                  {/* Selected Section Content */}
+                  {selectedSectionId ? (
+                    (() => {
+                      const selectedSection = sections.find((s) => (s.id || s._id) === selectedSectionId);
+                      if (!selectedSection) return null;
+
+                      const sectionData = sectionAttendanceData[selectedSectionId];
+                      const sectionName = selectedSection.section ? `Section ${selectedSection.section}` : `Section ${selectedSectionId}`;
+                      const filteredStudents = getFilteredStudentsForSection(selectedSectionId);
+                      const hasData = sectionData && sectionData.dates && sectionData.dates.length > 0;
+
+                      return (
+                        <div className="section-attendance-block">
+                          <div className="section-header">
+                            <div className="section-title">
+                              <h3>{sectionName}</h3>
+                              {selectedSection.teacher && <p className="section-teacher">Teacher: {selectedSection.teacher.name || "N/A"}</p>}
+                            </div>
+                            {hasData && (
+                              <button className="export-btn section-export-btn" onClick={() => exportSectionToCSV(selectedSectionId, sectionName)}>
+                                <Download size={18} />
+                                Export to Excel
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Search for this section */}
+                          <div className="search-container">
+                            <input
+                              type="text"
+                              placeholder={`Search students in ${sectionName}...`}
+                              value={sectionSearchQueries[selectedSectionId] || ""}
+                              onChange={(e) => handleSectionSearchChange(selectedSectionId, e.target.value)}
+                              className="search-input"
+                            />
+                          </div>
+
+                          {/* Attendance Table for this section */}
+                          {!hasData ? (
+                            <div className="empty-state section-empty-state">
+                              <Calendar size={32} />
+                              <p>No attendance records found for {sectionName}</p>
+                            </div>
+                          ) : (
+                            <div className="attendance-table-container">
+                              <table className="attendance-table">
+                                <thead>
+                                  <tr>
+                                    <th className="sticky-col">Roll Number</th>
+                                    <th className="sticky-col">Name</th>
+                                    {sectionData.dates.map((date) => (
+                                      <th key={date} className="date-header">
+                                        {formatDate(date)}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {filteredStudents.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={sectionData.dates.length + 2} className="no-results">
+                                        No students found
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    filteredStudents.map((student) => {
+                                      const studentId = student.id?.toString() || student.id;
+                                      const studentData = sectionData.attendanceData[studentId];
+                                      return (
+                                        <tr key={studentId}>
+                                          <td className="sticky-col roll-number">{student.rollNumber || "N/A"}</td>
+                                          <td className="sticky-col student-name">{student.name || "Unknown Student"}</td>
+                                          {sectionData.dates.map((date) => {
+                                            const status = studentData?.attendance[date] || "";
+                                            return (
+                                              <td key={date} className={`attendance-cell ${status}`}>
+                                                {status === "present" ? "P" : status === "absent" ? "A" : status === "late" ? "L" : ""}
+                                              </td>
+                                            );
+                                          })}
+                                        </tr>
+                                      );
+                                    })
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+
+                          {/* Legend for this section */}
+                          {hasData && (
+                            <div className="attendance-legend">
+                              <div className="legend-item">
+                                <span className="legend-dot present"></span>
+                                <span>Present (P)</span>
+                              </div>
+                              <div className="legend-item">
+                                <span className="legend-dot absent"></span>
+                                <span>Absent (A)</span>
+                              </div>
+                              <div className="legend-item">
+                                <span className="legend-dot late"></span>
+                                <span>Late (L)</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="empty-state section-empty-state">
+                      <Calendar size={32} />
+                      <p>Please select a section to view attendance</p>
+                    </div>
+                  )}
+                </>
               )}
             </>
           ) : (
