@@ -71,7 +71,7 @@ const ImportStudentsPage = () => {
         name: "John Doe",
         email: "john.doe@example.com",
         department: "Computer Science [Use Exact Name]",
-        program: "Bachelor of Computer Science[Use Exact Name]",
+        program: "Bachelor of Science in Computer Science[Use Exact Name]",
         currentSemester: 1,
         CGPA: 0.0,
       },
