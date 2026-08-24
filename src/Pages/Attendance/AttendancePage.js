@@ -3,6 +3,7 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import { Download, Calendar } from "lucide-react";
 import toast from "react-hot-toast";
+import { formatSectionTeachers } from "../../utils/sectionTeachers";
 import "./AttendancePage.css";
 
 const AttendancePage = () => {
@@ -441,7 +442,7 @@ const AttendancePage = () => {
                         return (
                           <button key={sectionId} className={`section-tab ${isActive ? "active" : ""}`} onClick={() => handleSectionChange(sectionId)}>
                             <span className="tab-label">{sectionName}</span>
-                            {section.teacher && <span className="tab-teacher">{section.teacher.name || "N/A"}</span>}
+                            <span className="tab-teacher">{formatSectionTeachers(section)}</span>
                             {studentCount > 0 && <span className="tab-count">{studentCount} students</span>}
                           </button>
                         );
@@ -465,7 +466,7 @@ const AttendancePage = () => {
                           <div className="section-header">
                             <div className="section-title">
                               <h3>{sectionName}</h3>
-                              {selectedSection.teacher && <p className="section-teacher">Teacher: {selectedSection.teacher.name || "N/A"}</p>}
+                              <p className="section-teacher">Teacher: {formatSectionTeachers(selectedSection)}</p>
                             </div>
                             {hasData && (
                               <button className="export-btn section-export-btn" onClick={() => exportSectionToCSV(selectedSectionId, sectionName)}>

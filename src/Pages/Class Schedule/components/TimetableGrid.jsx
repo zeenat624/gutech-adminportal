@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatSectionTeachers } from '../../../utils/sectionTeachers';
 import './TimetableGrid.css';
 
 const TimetableGrid = ({
@@ -129,7 +130,7 @@ const TimetableGrid = ({
                                   </span>
                                 </p>
                                 <p className="timetable-teacher-name">
-                                  Teacher: {sectionData?.teacherId?.userId?.name || 'No teacher assigned'}
+                                  Teacher: {formatSectionTeachers(sectionData)}
                                 </p>
                                 <p className="course-details">
                                   {sectionData?.courseId?.department && `${typeof sectionData.courseId.department === 'object' ? sectionData.courseId.department.name : sectionData.courseId.department}`}

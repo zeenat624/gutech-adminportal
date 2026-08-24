@@ -5,6 +5,7 @@ import { semesters } from '../../config/academicConfig';
 import { FiInfo, FiX, FiCheck, FiSearch, FiFilter } from 'react-icons/fi';
 import './TeacherAssignmentPage.css';
 import NoResultsFound from '../../Components/NoResultsFound';
+import { formatSectionTeachers } from '../../utils/sectionTeachers';
 
 // Create a separate component for each section to ensure isolation
 const SectionItem = ({ section, teachers, onAssign, loading }) => {
@@ -14,6 +15,8 @@ const SectionItem = ({ section, teachers, onAssign, loading }) => {
   useEffect(() => {
     if (section.teacher && section.teacher.id) {
       setSelectedTeacher(section.teacher.id);
+    } else if (Array.isArray(section.teachers) && section.teachers[0]?.id) {
+      setSelectedTeacher(section.teachers[0].id);
     }
   }, [section]);
   
@@ -30,7 +33,7 @@ const SectionItem = ({ section, teachers, onAssign, loading }) => {
       <div className="section-details">
         <span className="assignment-section-name">{section.section}</span>
         <span className="assignment-teacher-name">
-          {section.teacher?.name || 'Unassigned'}
+          {formatSectionTeachers(section, 'Unassigned')}
         </span>
       </div>
       <div className="section-actions">

@@ -6,6 +6,7 @@ import { semesters, getCurrentAcademicYear } from "../../config/academicConfig";
 import "./CourseRegistrationPage.css";
 import { FiSearch } from "react-icons/fi";
 import NoResultsFound from "../../Components/NoResultsFound";
+import { formatSectionTeachers } from "../../utils/sectionTeachers";
 
 const CourseRegistrationPage = () => {
   const apiUrl = process.env.REACT_APP_BACKEND_URL;
@@ -348,13 +349,11 @@ const CourseRegistrationPage = () => {
                       <h5>Section {section.section}</h5>
                     </div>
                     <div className="section-details">
-                      <p>Students: {section.enrolledStudentsCount || 0}</p>
-                      {section.teacher && (
-                        <div className="teacher-info">
-                          <span className="teacher-label">Teacher:</span>
-                          <span className="section-teacher-name">{section.teacher.name}</span>
-                        </div>
-                      )}
+                      <p>Students: {section.enrolledStudentsCount || section.enrolledCount || 0}</p>
+                      <div className="teacher-info">
+                        <span className="teacher-label">Teacher:</span>
+                        <span className="section-teacher-name">{formatSectionTeachers(section)}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
